@@ -1,0 +1,13 @@
+geometry_msgs/PoseStamped target_pose
+float64 max_linear_vel
+float64 max_angular_vel
+float64 timeout_s
+---
+float64 position_error
+float64 yaw_error
+float64 time_elapsed
+---
+bool success
+float64 final_position_error
+float64 final_yaw_error
+float64 elapsed_time

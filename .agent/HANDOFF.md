@@ -4,7 +4,7 @@
 P1_FOUNDATION
 
 ## Last accepted task
-P0-T01, P0-T02, P0-T03, P0-T04, P0-T05.
+P0-T01..P0-T05, P1-T01.
 
 ## Current slice
 Reproducible ROS workspace, package skeleton, dependency manifest, CI.

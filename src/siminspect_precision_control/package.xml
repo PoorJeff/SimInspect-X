@@ -1,0 +1,24 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+  <name>siminspect_precision_control</name>
+  <version>0.1.0</version>
+  <description>Precision approach: PID baseline and constrained MPC controllers.</description>
+  <maintainer email="siminspect@example.com">SimInspect-X</maintainer>
+  <license>MIT</license>
+
+  <buildtool_depend>ament_cmake</buildtool_depend>
+  <buildtool_depend>ament_cmake_python</buildtool_depend>
+
+  <depend>rclpy</depend>
+  <depend>siminspect_interfaces</depend>
+
+  <depend>python3-numpy</depend>
+  <depend>python3-scipy</depend>
+  <test_depend>ament_cmake_pytest</test_depend>
+  <test_depend>python3-pytest</test_depend>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
+</package>

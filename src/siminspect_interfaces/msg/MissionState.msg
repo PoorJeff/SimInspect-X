@@ -1,0 +1,5 @@
+string state
+string current_asset_id
+int32 attempt
+int32 viewpoint_index
+builtin_interfaces/Time timestamp

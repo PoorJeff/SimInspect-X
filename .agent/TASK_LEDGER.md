@@ -9,9 +9,9 @@ Status values: TODO / IN_PROGRESS / READY_FOR_REVIEW / ACCEPTED / BLOCKED / DEFE
 | P0-T03 | Freeze gauge task and ground-truth separation | ACCEPTED | verified PASS, audited PASS |
 | P0-T04 | Freeze TF/topic/action contract | ACCEPTED | verified PASS, audited PASS |
 | P0-T05 | Freeze experiment baselines and metrics | ACCEPTED | verified PASS, audited PASS |
-| P1-T01 | Reproducible Ubuntu/ROS setup | TODO | clean install/build |
-| P1-T02 | ROS package skeleton | TODO | colcon build |
-| P1-T03 | CI build/lint/unit smoke | TODO | CI green |
+| P1-T01 | Reproducible Ubuntu/ROS setup | ACCEPTED | verified PASS, audited PASS |
+| P1-T02 | ROS package skeleton | ACCEPTED | verified PASS, audited PASS |
+| P1-T03 | CI build/lint/unit smoke | ACCEPTED | verified PASS, audited PASS |
 | P2-T01 | Differential-drive URDF/Xacro | TODO | model validation |
 | P2-T02 | gz_ros2_control integration | TODO | cmd -> motion |
 | P2-T03 | LiDAR/IMU/RGB sensors | TODO | topic/rate tests |

@@ -1,0 +1,7 @@
+string asset_id
+float64 estimated_value
+string unit
+float64 confidence
+float64 target_pixel_area
+float64 view_angle_proxy
+builtin_interfaces/Time timestamp

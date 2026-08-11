@@ -1,0 +1,1 @@
+siminspect_interfaces/Asset[] assets

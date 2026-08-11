@@ -1,0 +1,66 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-24.04
+    env:
+      DEBIAN_FRONTEND: noninteractive
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: docker/Dockerfile
+          push: false
+          load: true
+          tags: siminspect-x:ci
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build and test (headless)
+        run: |
+          docker run --rm \
+            -v ${{ github.workspace }}:/home/siminspect/ws \
+            -e DISPLAY= \
+            siminspect-x:ci \
+            bash -c '
+              set -euo pipefail
+              source /opt/ros/jazzy/setup.bash
+              cd ~/ws
+              echo "=== rosdep ==="
+              rosdep update
+              rosdep install --from-paths src --ignore-src -y --rosdistro jazzy
+              echo "=== colcon build ==="
+              colcon build --symlink-install --cmake-args -DCMAKE_BUILD_TYPE=RelWithDebInfo
+              echo "=== colcon test ==="
+              colcon test --return-code-on-test-failure
+              echo "=== colcon test-result ==="
+              colcon test-result --all --verbose
+            '
+
+      - name: L1 Firewall
+        run: |
+          echo "Checking ground-truth firewall L1..."
+          violations=0
+          for f in src/siminspect_*/package.xml; do
+            pkg=$(basename "$(dirname "$f")")
+            if [ "$pkg" = "siminspect_benchmark" ]; then continue; fi
+            if grep -q '<depend>siminspect_benchmark</depend>' "$f"; then
+              echo "VIOLATION: $pkg depends on siminspect_benchmark!"
+              violations=$((violations + 1))
+            fi
+          done
+          if [ $violations -gt 0 ]; then
+            echo "FAIL: $violations production package(s) violate L1 firewall."
+            exit 1
+          fi
+          echo "PASS: No production package depends on siminspect_benchmark."

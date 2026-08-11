@@ -1,0 +1,2 @@
+string asset_id
+siminspect_interfaces/CandidateViewpoint[] viewpoints
