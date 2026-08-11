@@ -5,6 +5,17 @@ SimInspect-X/
 ├── README.md
 ├── AGENTS.md
 ├── TREE.md
+├── .opencode/
+│   ├── agents/
+│   │   ├── TaskBuilder.md
+│   │   └── Project-Auditor.md
+│   └── commands/
+│       ├── task-build.md
+│       ├── task-next.md
+│       ├── work-slice.md
+│       ├── verify-work.md
+│       ├── audit-work.md
+│       └── project-status.md
 ├── .agent/
 │   ├── PROJECT_STATE.md
 │   ├── TASK_LEDGER.md

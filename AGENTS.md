@@ -60,3 +60,27 @@ No phase is ACCEPTED without:
 - metrics when relevant;
 - updated docs/state;
 - no unresolved critical contradiction.
+
+
+## OpenCode runtime roles
+
+Project-local OpenCode configuration is under `.opencode/`.
+
+- **Phase-Orchestrator (global):** owns phase/task selection and acceptance.
+- **TaskBuilder (project-local primary):** converts one task into one bounded work slice; read-only.
+- **Build (built-in):** implements only the approved work slice.
+- **Project-Auditor (project-local subagent):** verifies/audits; read-only.
+- **Session-Bootstrap / Session-Handoff (global):** move context between work sessions.
+
+Recommended loop:
+
+```text
+Phase-Orchestrator
+-> /task-build <TASK_ID>
+-> Build + /work-slice
+-> /verify-work
+-> /audit-work
+-> Phase-Orchestrator acceptance
+```
+
+Only Phase-Orchestrator may advance the ledger to ACCEPTED.
