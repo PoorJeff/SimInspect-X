@@ -1,7 +1,7 @@
 # PROJECT_STATE
 
-Status: P0_COMPLETE / P1_READY
-Current phase: P1_FOUNDATION
+Status: P1_COMPLETE / P2_READY
+Current phase: P2_ROBOT_WORLD
 
 ## Project identity
 Name: SimInspect-X
@@ -40,4 +40,5 @@ ROS 2, Gazebo, Nav2, SLAM Toolbox, robot_localization.
 - photorealistic simulation.
 
 Next gate:
+P2 must deliver robot URDF, gz_ros2_control integration, sensors, plant world and candidate viewpoint visualisation.
 P1 must deliver clean colcon build, headless tests, and CI green from documented setup.
