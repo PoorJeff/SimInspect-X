@@ -1,7 +1,7 @@
 # PROJECT_STATE
 
-Status: BLUEPRINT_V2_FROZEN / IMPLEMENTATION_NOT_STARTED
-Current phase: P0_RESEARCH_FREEZE
+Status: P0_COMPLETE / P1_READY
+Current phase: P1_FOUNDATION
 
 ## Project identity
 Name: SimInspect-X
@@ -40,4 +40,4 @@ ROS 2, Gazebo, Nav2, SLAM Toolbox, robot_localization.
 - photorealistic simulation.
 
 Next gate:
-P0 must freeze formulas, interfaces, ground-truth separation, success metrics and implementation scope.
+P1 must deliver clean colcon build, headless tests, and CI green from documented setup.
