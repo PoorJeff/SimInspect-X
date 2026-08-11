@@ -6,9 +6,9 @@ Status values: TODO / IN_PROGRESS / READY_FOR_REVIEW / ACCEPTED / BLOCKED / DEFE
 |---|---|---|---|
 | P0-T01 | Freeze research thesis and hypotheses | ACCEPTED | verified PASS, audited PASS |
 | P0-T02 | Freeze asset/viewpoint mathematical model | ACCEPTED | verified PASS, audited PASS |
-| P0-T03 | Freeze gauge task and ground-truth separation | READY_FOR_REVIEW | inspection success criteria + timeout params + ground-truth topics + dual-layer CI firewall |
-| P0-T04 | Freeze TF/topic/action contract | TODO | interface audit |
-| P0-T05 | Freeze experiment baselines and metrics | TODO | experiment matrix |
+| P0-T03 | Freeze gauge task and ground-truth separation | ACCEPTED | verified PASS, audited PASS |
+| P0-T04 | Freeze TF/topic/action contract | ACCEPTED | verified PASS, audited PASS |
+| P0-T05 | Freeze experiment baselines and metrics | ACCEPTED | verified PASS, audited PASS |
 | P1-T01 | Reproducible Ubuntu/ROS setup | TODO | clean install/build |
 | P1-T02 | ROS package skeleton | TODO | colcon build |
 | P1-T03 | CI build/lint/unit smoke | TODO | CI green |

@@ -4,7 +4,7 @@
 P0_RESEARCH_FREEZE
 
 ## Last accepted task
-P0-T01. P0-T02.
+P0-T01, P0-T02, P0-T03, P0-T04, P0-T05.
 
 ## Current slice
 Freeze research and systems contracts only.
