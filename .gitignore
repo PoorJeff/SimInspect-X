@@ -1,0 +1,13 @@
+build/
+install/
+log/
+.venv/
+__pycache__/
+*.pyc
+*.bag
+*.db3
+*.mcap
+data/gauges/generated/*
+!data/gauges/generated/.gitkeep
+experiments/raw/*
+!experiments/raw/.gitkeep

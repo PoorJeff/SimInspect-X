@@ -1,0 +1,22 @@
+# HANDOFF TEMPLATE
+
+## Current phase
+P0_RESEARCH_FREEZE
+
+## Last accepted task
+None.
+
+## Current slice
+Freeze research and systems contracts only.
+
+## Must read
+- AGENTS.md
+- .agent/PROJECT_STATE.md
+- .agent/TASK_LEDGER.md
+- .agent/DECISIONS.md
+- planning/MASTER_PLAN.md
+
+## Do not do
+- no implementation before P0 gate;
+- no RL/LLM/multi-robot/manipulator;
+- no replacement of gauge task without ADR.

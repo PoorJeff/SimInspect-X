@@ -1,0 +1,35 @@
+{
+  "created_for": "SimInspect-X Blueprint v2",
+  "core_sources": [
+    {
+      "title": "NTU MSc Robotics and Intelligent Systems curriculum",
+      "role": "admissions alignment",
+      "url": "https://www.ntu.edu.sg/mae/admissions/current-students/graduate-studies/programme-information"
+    },
+    {
+      "title": "NTU MSc Computer Control & Automation curriculum",
+      "role": "admissions alignment",
+      "url": "https://www.ntu.edu.sg/education/graduate-programme/master-of-science-in-computer-control-automation"
+    },
+    {
+      "title": "AutoInspect: Towards Long-Term Autonomous Industrial Inspection",
+      "role": "mission-level architecture inspiration",
+      "url": "https://arxiv.org/abs/2404.12785"
+    },
+    {
+      "title": "Sight Over Site: Perception-Aware Reinforcement Learning for Efficient Robotic Inspection",
+      "role": "problem formulation: inspection viewpoint matters",
+      "url": "https://arxiv.org/abs/2509.17877"
+    },
+    {
+      "title": "Leveraging Fixed-Parameter Tractability for Robot Inspection Planning",
+      "role": "inspection planning optimisation inspiration",
+      "url": "https://arxiv.org/abs/2407.00251"
+    },
+    {
+      "title": "ROS 2 Gazebo Vendor Packages",
+      "role": "Jazzy/Harmonic pairing",
+      "url": "https://gazebosim.org/docs/latest/ros2_gz_vendor_pkgs/"
+    }
+  ]
+}
