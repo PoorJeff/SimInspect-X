@@ -60,7 +60,34 @@ Start with an interpretable confidence proxy using:
 
 Do not call it statistically calibrated probability unless calibration is actually performed.
 
+## Inspection Success Criteria
+
+A gauge inspection **succeeds** for a given asset only when all of the following hold:
+
+| Condition | Parameter | Value |
+|-----------|-----------|-------|
+| Valid gauge reading obtained | confidence threshold | ≥ 0.80 |
+|  | gauge error threshold | ≤ 5 % of full-scale range |
+| Within per-attempt timeout | per-attempt timeout | 30 s |
+| Within per-asset total timeout | per-asset total timeout | 180 s |
+| Within maximum attempts | max_attempts | 3 |
+| No manual intervention | — | implicit for simulation |
+
+A **valid gauge reading** is further constrained: if confidence is null, NaN, or absent,
+the reading is invalid regardless of any other condition.
+
+## Timeout Parameters
+
+| Parameter | Value | Description |
+|-----------|-------|-------------|
+| Per-attempt timeout | 30 s | Time from arrival at viewpoint to reader returning a result. Covers camera capture + image processing pipeline. |
+| Per-asset total timeout | 180 s | Sum of all attempts for one asset (navigation + approach + reading). Allows up to 3 attempts at ~60 s each. |
+
+Both timeouts are global defaults configurable in the asset YAML (inspection.per_attempt_timeout_s,
+inspection.per_asset_timeout_s).
+
 ## Metrics
+
 - MAE;
 - RMSE;
 - percentage within tolerance;

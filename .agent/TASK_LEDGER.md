@@ -4,9 +4,9 @@ Status values: TODO / IN_PROGRESS / READY_FOR_REVIEW / ACCEPTED / BLOCKED / DEFE
 
 | ID | Task | Status | Acceptance evidence |
 |---|---|---|---|
-| P0-T01 | Freeze research thesis and hypotheses | TODO | approved `01_PROJECT_THESIS.md` |
-| P0-T02 | Freeze asset/viewpoint mathematical model | TODO | equations + schema |
-| P0-T03 | Freeze gauge task and ground-truth separation | TODO | interface + test plan |
+| P0-T01 | Freeze research thesis and hypotheses | ACCEPTED | verified PASS, audited PASS |
+| P0-T02 | Freeze asset/viewpoint mathematical model | ACCEPTED | verified PASS, audited PASS |
+| P0-T03 | Freeze gauge task and ground-truth separation | READY_FOR_REVIEW | inspection success criteria + timeout params + ground-truth topics + dual-layer CI firewall |
 | P0-T04 | Freeze TF/topic/action contract | TODO | interface audit |
 | P0-T05 | Freeze experiment baselines and metrics | TODO | experiment matrix |
 | P1-T01 | Reproducible Ubuntu/ROS setup | TODO | clean install/build |

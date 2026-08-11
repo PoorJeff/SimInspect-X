@@ -37,9 +37,27 @@ No double publishers.
 
 ## Ground-truth firewall
 
-Namespace:
-`/benchmark_ground_truth/*`
+Production autonomy nodes must never access simulator ground truth.
+Only `siminspect_benchmark` is authorized to publish or subscribe to the
+`/benchmark_ground_truth` namespace.
 
-Only `siminspect_benchmark` may subscribe to it.
+### Topics
 
-CI/integration test should fail if production packages depend on benchmark-ground-truth interfaces.
+| Topic | Message type | Publisher | Subscriber |
+|-------|-------------|-----------|------------|
+| `/benchmark_ground_truth/gauge_value/<asset_id>` | `std_msgs/Float64` | `siminspect_benchmark` | `siminspect_benchmark` only |
+| `/benchmark_ground_truth/robot_pose` | `nav_msgs/Odometry` | `siminspect_benchmark` | `siminspect_benchmark` only |
+
+- `<asset_id>` is a parameterised topic name, one per gauge asset (e.g. `gauge_pump_01`).
+- `gauge_value` carries the simulator-known true pointer reading for that asset.
+- `robot_pose` carries the simulator-ground-truth pose and twist for localisation and control accuracy evaluation.
+- No production package may publish or subscribe to any topic under `/benchmark_ground_truth/`.
+
+### Dual-layer CI enforcement
+
+| Layer | Mechanism | Description |
+|-------|-----------|-------------|
+| L1 — compile-time | `ament_cmake` dependency check | Production packages (`siminspect_*` excluding `siminspect_benchmark`) must not declare `<depend>siminspect_benchmark</depend>` in `package.xml`. CI fails on violation. |
+| L2 — runtime | `rosgraph` subscription monitor | `siminspect_benchmark` runs a watchdog node that queries `rosgraph` for all subscribers to `/benchmark_ground_truth/*`. Any subscriber outside the whitelist (`siminspect_benchmark` only) triggers a CI warning or failure. |
+
+Defence-in-depth guarantees that ground-truth isolation — the scientific integrity foundation of the project — is enforced both at build time and during every experimental run.
