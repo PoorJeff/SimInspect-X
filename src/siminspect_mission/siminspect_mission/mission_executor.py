@@ -114,7 +114,12 @@ class MissionStateMachine:
                 if self.nav_retries < MAX_NAV_RETRIES:
                     self.state = S_NAVIGATE       # retry same viewpoint
                 else:
-                    self.state = S_SELECT_VIEWPOINT  # try next viewpoint
+                    self.nav_retries = 0
+                    self.viewpoint_attempts += 1
+                    if self.viewpoint_attempts < MAX_VIEWPOINT_ATTEMPTS:
+                        self.state = S_SELECT_VIEWPOINT  # try next viewpoint
+                    else:
+                        self.state = S_SELECT_ASSET      # move on, mark failed at RECORD
 
         elif s == S_PRECISION_APPROACH:
             if event == E_APPROACH_OK:

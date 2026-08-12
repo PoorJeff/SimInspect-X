@@ -1,80 +1,100 @@
 # Current Project Context
 
 ## Current Goal
-Complete P6-T05 (adaptive re-inspection / P2 selector), then P7-P10 phases.
+Complete P8 (adaptive mission execution): T02 report schema, T03 retry policy, T04 route ordering. Then P9-P10.
 
 ## Current Phase / Task
-**P6-T05** — P2 adaptive selector (IN PROGRESS, header done, methods pending)
-Phase: P6 (viewport planning), 4/5 tasks ACCEPTED.
+**P8-T02** — inspection result/report schema (TODO; P8-T01 already implements a basic `_record_result` + `mission_report.json` export, so T02 is a delta, not greenfield)
+Phase: P8 (adaptive mission), 1/4 tasks ACCEPTED.
 
 ## Last Verified / Accepted State
-P6-T04 ACCEPTED (P1 selector + benchmark + paired config).
-P6-T05 READY_FOR_REVIEW not yet reached — p2_selector.py has header only.
-All P0-P5 phases: 25/25 tasks ACCEPTED.
+P8-T01 ACCEPTED (verified PASS, audited PASS). 10/10 tests.
+All P0-P7 phases: 34/34 tasks ACCEPTED. Total 35/55.
 
 ## What Has Actually Been Implemented
-**Completed phases:** P0 (research freeze, 5 docs), P1 (Docker/6 ROS pkgs/CI),
-P2 (URDF/Gazebo/sensors/plant world/5 assets/candidate viz),
-P3 (EKF/SLAM/localization/eval harness),
-P4 (Nav2 NavfnPlanner+MPPI/DWB/recovery/nav benchmark),
-P5 (synthetic gauge dataset 600 images/detector 98% acc/reader MAE 0.55%/confidence estimator).
+**Completed phases:** P0 (research freeze), P1 (Docker/6 ROS pkgs/CI),
+P2 (URDF/Gazebo/sensors/plant world/assets/candidate viz),
+P3 (EKF/SLAM/localization/eval), P4 (Nav2 Navfn+MPPI/recovery/nav benchmark),
+P5 (synthetic gauge dataset/detector 98%/reader MAE 0.55%/confidence),
+P6 (candidate gen, quality scorer D/A/S/T, B0/P1/P2 selectors + benchmarks),
+P7 (handoff manager, PID, linear MPC (OSQP), PID-vs-MPC paired benchmark E5).
 
-**P6 partial:** T01 candidate gen+raycaster, T02 quality scorer D/A/S/T formulas,
-T03 B0 fixed-waypoint selector+benchmark, T04 P1 perception-aware selector+benchmark.
-**P6-T05 blocker:** p2_selector.py header exists (P2Selector class, CONF_THRESHOLD=0.80,
-MAX_ATTEMPTS=3, import structure). Three methods still need to be appended:
-`on_reading()`, `select_for_asset()`, `_select_next_best()`.
-Also needed: run_p2_benchmark.py, p2_experiment.yaml, test_p2_selector.py, CMakeLists updates.
+**P8 partial:** T01 mission_executor.py (pure MissionStateMachine + ROS node),
+mission.launch.py, 10/10 tests, package.xml deps complete.
 
 ## Current Architecture / Interfaces
-- TF: map→odom (SLAM)→base_link (EKF)→sensors
-- Topics: /cmd_vel, /scan, /imu/data, /camera/image_raw, /inspection/*, /benchmark_ground_truth/*
-- 12 ROS packages in src/ (6 buildable, 6 skeleton for P2-P4)
-- Firewall: /benchmark_ground_truth/* only in siminspect_benchmark
+- TF: map->odom (SLAM)->base_link (EKF)->sensors
+- Topics: /cmd_vel, /scan, /imu/data, /camera/image_raw, /inspection/*,
+  /inspection/retry_viewpoint (std_msgs/String, handoff failure signal),
+  /benchmark_ground_truth/* (firewalled to siminspect_benchmark)
+- Actions: NavigateToPose (Nav2), PrecisionApproach (controller_interface server;
+  handoff_manager and mission_executor are clients)
+- controller_interface.py: `controller_type` param switches pid|mpc
+- Mission SM states: IDLE->LOAD_MISSION->SELECT_ASSET->SELECT_VIEWPOINT->NAVIGATE
+  ->PRECISION_APPROACH->INSPECT->VALIDATE->RECORD->RETURN_HOME->EXPORT_REPORT->DONE
+- Retries: nav 2, viewpoints 3, reader 3 (docs/11)
 
 ## Active Constraints
-- Windows environment: no ROS 2/colcon/Gazebo runtime. All code is static-only.
-- Push to GitHub fails without VPN.
-- Large amounts of uncommitted P3/P4/P5/P6 work in working tree.
+- Windows environment: no ROS 2/colcon/Gazebo/osqp runtime. Code is static-only;
+  tests that need rclpy use unittest.mock MagicMock or pure-logic extraction.
+- Push to GitHub fails without VPN (connection reset on port 443).
+- OSQP not installed on Windows: MPCController returns (0.0,0.0) via ImportError
+  fallback -> all MPC benchmark trials FAIL on Windows. Real MPC validation
+  requires Ubuntu 24.04 + osqp.
 
 ## Important Decisions
 - ADR-001: Ubuntu 24.04 + ROS 2 Jazzy + Gazebo Harmonic
 - ADR-006: MPPI is production local controller
-- B0 fixed waypoint: center candidate, V=0 still navigates, no switching
-- P1: max Q among V>0 candidates
-- P2: P1 + confidence < 0.80 → next-best Q, max 3 attempts
+- P7: PID baseline + linear MPC (linearized around current heading, N=15,
+  OSQP QP) share identical bounds (v 0.5, w 1.5, a 0.3, alpha 1.0),
+  dt=0.05, convergence (0.02m/0.03rad, 10 steps) for fair E5 comparison
+- Mission: pure state machine class separated from ROS node for Windows testability
+- Benchmark outputs live in results/ (not repo root)
 
 ## Open Problems / Reviewer Findings
-- All P3-P6 code uncommitted — needs git add + commit + push
-- p2_selector.py incomplete (3 methods missing)
-- PROJECT_STATE.md stale (says P1_COMPLETE, actually P6)
-- plant.sdf walls may block some gauge access
+- git push BLOCKED (no VPN): local d3fded6 ahead of remote d622c7e by 1 commit
+- P8-T03 MANDATORY (audit post-condition): S_NAVIGATE retry-exhaustion path
+  does not increment viewpoint_attempts -> SELECT_VIEWPOINT<->NAVIGATE infinite
+  loop risk, violates docs/11 "No infinite loops"
+- MPC runtime evidence missing (Windows): ledger says "verified PASS" for
+  P7-T03/T04 but MPC never controlled a robot; Ubuntu+OSQP run needed
+- test_dummy.py still registered in some packages (harmless boilerplate)
+- HANDOFF.md / older docs may be stale (P1 references)
 
 ## Failed Approaches To Avoid
 - DO NOT use double-quoted here-strings for Markdown code fences (PowerShell corrupts backticks)
 - DO NOT use `-replace` with complex patterns (PowerShell arg parsing breaks)
-- Use StreamWriter with `$false` UTF8Encoding to avoid BOM
+- Use StreamWriter/WriteAllText with `$false` UTF8Encoding to avoid BOM
 - For Markdown files with backtick code fences, use raw byte writing or Python
+- unittest.mock MagicMock for rclpy breaks Node subclassing (issubclass TypeError);
+  prefer pure-logic extraction in tests (see test_handoff.py pattern)
+- YAML files must be ASCII-only (GBK codec chokes on unicode like the times symbol)
 
 ## Tests / Verification Evidence
-- P5: test_gauge_reader MAE=0.0055 (0.55% FS), 98% within-tolerance
-- P5: test_confidence_correlation: high-conf MAE 0.025 vs low-conf 0.071
-- P6: test_quality_scorer 11/11 pass, test_candidate_generator 3/3 pass
+- P7 precision control suite: 33/33 PASS (PID 12, MPC 11, handoff 9, dummy 1)
+- P8 mission: 10/10 PASS (happy path, retry limits, retry signal, 5-asset flow)
+- P6: test_quality_scorer 11/11, test_candidate_generator 3/3 (via audit)
+- P5: MAE=0.55% FS, 98% within-tolerance
+- P7-T04 benchmark ran on Windows: PID converges (90-130 steps), MPC FAILs
+  (no OSQP) — results in results/precision_results.json
 
 ## Unverified Assumptions
 - Dockerfile builds correctly (never tested on Ubuntu)
 - Nav2 MPPI controller will work at runtime
 - Gazebo sensors bridge correctly via ros_gz_bridge
+- MPC actually converges when OSQP is available (untested)
 
 ## Exact Next Action
-1. Append 3 methods to p2_selector.py (see p2_selector.py header for class structure)
-2. Create run_p2_benchmark.py, p2_experiment.yaml, test_p2_selector.py
-3. Update CMakeLists.txt in both siminspect_viewpoint_planner and siminspect_benchmark
-4. Update TASK_LEDGER P6-T05 → READY_FOR_REVIEW
-5. git add -A && git commit -m "P3-P6: complete through P6-T04" && git push (with VPN)
+1. git push origin main (with VPN) — commit d3fded6 is local-only
+2. Get P8-T02 prompt from user (report schema delta over T01 implementation)
+3. P8-T03: fix nav exhaustion viewpoint_attempts increment (audit post-condition)
+4. P8-T04: mission ordering heuristic
+5. P9: fault injector, experiment runner, ablations, analysis
 
 ## Files To Read First In A New Session
-- .agent/TASK_LEDGER.md (task status)
-- src/siminspect_viewpoint_planner/siminspect_viewpoint_planner/p2_selector.py (incomplete)
-- src/siminspect_viewpoint_planner/siminspect_viewpoint_planner/p1_selector.py (reference)
-- docs/07_ASSET_AND_VIEWPOINT_MODEL.md (quality formulas)
+- .agent/TASK_LEDGER.md (status)
+- src/siminspect_mission/siminspect_mission/mission_executor.py (P8 core)
+- src/siminspect_precision_control/siminspect_precision_control/pid_controller.py
+- src/siminspect_precision_control/siminspect_precision_control/mpc_controller.py
+- docs/11_MISSION_EXECUTIVE.md (state machine contract)
+- docs/06_ROS_TF_CONTRACT.md (updated retry_viewpoint)

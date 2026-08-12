@@ -83,6 +83,25 @@ def test_nav_retry_limit():
 
     sm.on_event(E_NAV_FAIL)
     assert sm.state == S_SELECT_VIEWPOINT, "Should move to next viewpoint after retries exhausted"
+    assert sm.viewpoint_attempts == 1, "Nav exhaustion should consume a viewpoint attempt"
+
+def test_nav_exhaustion_no_infinite_loop():
+    """Sustained nav failure must not loop forever; it should exhaust viewpoints and move on."""
+    sm = MissionStateMachine()
+    sm.state = S_SELECT_VIEWPOINT
+    sm.viewpoint_attempts = 0
+
+    # Drive repeated nav failure cycles: SELECT_VIEWPOINT -> NAVIGATE -> (fail x2) -> ...
+    for cycle in range(MAX_VIEWPOINT_ATTEMPTS):
+        assert sm.state == S_SELECT_VIEWPOINT, f"Cycle {cycle}: should be at viewpoint selection"
+        sm.on_event(E_VIEWPOINT_SELECTED)
+        assert sm.state == S_NAVIGATE
+        for _ in range(MAX_NAV_RETRIES):
+            sm.on_event(E_NAV_FAIL)
+
+    # After 3 viewpoint attempts all consumed, must move to next asset (no loop)
+    assert sm.state == S_SELECT_ASSET, "Should escape to next asset after viewpoints exhausted"
+    assert sm.viewpoint_attempts == MAX_VIEWPOINT_ATTEMPTS
 
 def test_viewpoint_attempt_limit():
     """Approach failures should retry up to MAX_VIEWPOINT_ATTEMPTS."""
