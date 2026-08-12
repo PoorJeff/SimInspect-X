@@ -34,6 +34,7 @@ No double publishers.
 | `/inspection/assets` | `siminspect_interfaces/AssetArray` |
 | `/inspection/candidate_viewpoints` | `siminspect_interfaces/CandidateViewpointArray` |
 | `/inspection/selected_viewpoint` | `geometry_msgs/PoseStamped` |
+| `/inspection/retry_viewpoint` | `std_msgs/String` |
 | `/inspection/gauge_reading` | `siminspect_interfaces/GaugeReading` |
 | `/inspection/mission_state` | `siminspect_interfaces/MissionState` |
 
@@ -115,6 +116,7 @@ is governed by the Mission Executive state machine (`NAVIGATE → PRECISION_APPR
 | `/inspection/assets` | `siminspect_assets` | `siminspect_viewpoint_planner`, `siminspect_mission` |
 | `/inspection/candidate_viewpoints` | `siminspect_viewpoint_planner` | `siminspect_mission` |
 | `/inspection/selected_viewpoint` | `siminspect_viewpoint_planner` | `siminspect_mission`, `siminspect_navigation` |
+| `/inspection/retry_viewpoint` | `siminspect_precision_control` | `siminspect_mission` |
 | `/inspection/gauge_reading` | `siminspect_gauge_vision` | `siminspect_mission`, `siminspect_benchmark` |
 | `/inspection/mission_state` | `siminspect_mission` | `siminspect_benchmark` |
 | `PrecisionApproach` (action) | `siminspect_precision_control` (server) | `siminspect_mission` (client) |

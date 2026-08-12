@@ -1,0 +1,23 @@
+# E5: Precision control - PID vs MPC paired benchmark
+# Fair comparison: same initial states, dt=0.05s, bounds, timeout=30s per trial
+experiment: E5_precision_control
+methods: [pid, mpc]
+dt: 0.05
+timeout_s: 30
+max_steps: 600
+seeds: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+targets:
+  - {x: 1.0, y: 0.0, yaw: 0.0}
+  - {x: 0.0, y: 1.0, yaw: 1.57}
+  - {x: -0.5, y: -0.5, yaw: -2.36}
+conditions:
+  - id: E5_nominal
+  - id: E5_yaw_error
+    initial_yaw_offset_deg: 30
+  - id: E5_measurement_noise
+    pos_noise_std: 0.01
+    yaw_noise_std: 0.03
+  - id: E5_wheel_slip
+    slip_ratio: 0.15
+  - id: E5_saturation
+    target_distance: 2.0

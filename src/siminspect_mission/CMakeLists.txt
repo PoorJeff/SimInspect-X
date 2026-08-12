@@ -10,9 +10,15 @@ find_package(ament_cmake_python REQUIRED)
 
 ament_python_install_package(${PROJECT_NAME})
 
+install(PROGRAMS
+  ${PROJECT_NAME}/mission_executor.py
+  DESTINATION lib/${PROJECT_NAME}
+)
+install(DIRECTORY launch DESTINATION share/${PROJECT_NAME})
+
 if(BUILD_TESTING)
   find_package(ament_cmake_pytest REQUIRED)
-  ament_add_pytest_test(test_dummy test/test_dummy.py)
+  ament_add_pytest_test(test_mission_executor test/test_mission_executor.py)
 endif()
 
 ament_package()

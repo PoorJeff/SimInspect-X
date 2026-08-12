@@ -1,7 +1,7 @@
 # PROJECT_STATE
 
-Status: P7_IN_PROGRESS
-Current phase: P7_PRECISION_CONTROL
+Status: P8_IN_PROGRESS
+Current phase: P8_ADAPTIVE_MISSION
 
 ## Project identity
 Name: SimInspect-X
@@ -18,11 +18,11 @@ Public title:
 - P6: Viewpoint planning (candidate gen, quality scorer, B0, P1, P2 selectors) (5/5 ACCEPTED)
 
 ## Current phase
-P7: Precision approach control
-- P7-T01: PrecisionApproach action interface + handoff manager (ACCEPTED)
-- P7-T02: PID controller (TODO)
-- P7-T03: Linear MPC controller (TODO)
-- P7-T04: PID vs MPC paired benchmark (TODO)
+P8: Adaptive mission execution
+- P8-T01: Mission executive state machine (READY_FOR_REVIEW)
+- P8-T02: Inspection result/report schema (TODO)
+- P8-T03: Route/asset retry policy (TODO)
+- P8-T04: Optional mission ordering heuristic (TODO)
 
 ## Gold Core
 - differential-drive AMR in Gazebo;
