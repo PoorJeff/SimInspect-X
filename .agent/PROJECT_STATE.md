@@ -19,7 +19,7 @@ Public title:
 
 ## Current phase
 P8: Adaptive mission execution
-- P8-T01: Mission executive state machine (READY_FOR_REVIEW)
+- P8-T01: Mission executive state machine (ACCEPTED)
 - P8-T02: Inspection result/report schema (TODO)
 - P8-T03: Route/asset retry policy (TODO)
 - P8-T04: Optional mission ordering heuristic (TODO)
