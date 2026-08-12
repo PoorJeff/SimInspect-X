@@ -1,4 +1,4 @@
-﻿import os
+import os
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument, ExecuteProcess
 from launch.conditions import IfCondition
@@ -33,6 +33,7 @@ def generate_launch_description():
         "/camera/image_raw@sensor_msgs/msg/Image@gz.msgs.Image",
         "/camera/camera_info@sensor_msgs/msg/CameraInfo@gz.msgs.CameraInfo",
         "/wheel/odometry@nav_msgs/msg/Odometry@gz.msgs.Odometry",
+        "/model/siminspect_amr/pose@nav_msgs/msg/Odometry@gz.msgs.Pose",
     ]
 
     gz_bridge = Node(package="ros_gz_bridge", executable="parameter_bridge",
@@ -41,9 +42,10 @@ def generate_launch_description():
         remappings=[("/camera/image_raw", "/camera/image_raw"),
                     ("/camera/camera_info", "/camera/camera_info")])
 
+    gt_pub = Node(package="siminspect_benchmark", executable="ground_truth_publisher.py", name="ground_truth_publisher", parameters=[{"use_sim_time": use_sim_time}])
     return LaunchDescription([
         DeclareLaunchArgument("use_sim_time", default_value="true"),
         DeclareLaunchArgument("gui", default_value="false"),
         DeclareLaunchArgument("world", default_value="empty.sdf"),
-        gz_server, gz_gui, rsp, gz_bridge, gz_spawn,
+        gz_server, gz_gui, rsp, gz_bridge, gz_spawn, gt_pub,
     ])

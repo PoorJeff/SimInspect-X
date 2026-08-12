@@ -1,0 +1,31 @@
+<?xml version="1.0"?>
+<!-- blocked_test.sdf: plant world + obstacles for recovery testing -->
+<sdf version="1.10"><world name="plant">
+  <gui fullscreen="0"/>
+  <physics type="ode"><max_step_size>0.001</max_step_size><real_time_factor>1.0</real_time_factor></physics>
+  <model name="ground"><static>true</static><link name="link"><visual name="v"><geometry><plane><size>20 20</size></plane></geometry><material><ambient>0.3 0.3 0.3</ambient></material></visual><collision name="c"><geometry><plane><size>20 20</size></plane></geometry></collision></link></model>
+  <light name="sun" type="directional"><pose>0 0 10 0 0 0</pose><diffuse>0.8 0.8 0.8 1</diffuse><specular>0.2 0.2 0.2 1</specular></light>
+  <!-- Walls -->
+  <model name="wall_north"><static>true</static><pose>0 5 1 0 0 0</pose><link name="link"><visual name="v"><geometry><box size="10 0.2 2"/></geometry><material><ambient>0.6 0.6 0.6</ambient></material></visual><collision name="c"><geometry><box size="10 0.2 2"/></geometry></collision></link></model>
+  <model name="wall_south"><static>true</static><pose>0 -5 1 0 0 0</pose><link name="link"><visual name="v"><geometry><box size="10 0.2 2"/></geometry><material><ambient>0.6 0.6 0.6</ambient></material></visual><collision name="c"><geometry><box size="10 0.2 2"/></geometry></collision></link></model>
+  <model name="wall_east"><static>true</static><pose>5 0 1 0 0 1.57</pose><link name="link"><visual name="v"><geometry><box size="10 0.2 2"/></geometry><material><ambient>0.6 0.6 0.6</ambient></material></visual><collision name="c"><geometry><box size="10 0.2 2"/></geometry></collision></link></model>
+  <model name="wall_west"><static>true</static><pose>-5 0 1 0 0 1.57</pose><link name="link"><visual name="v"><geometry><box size="10 0.2 2"/></geometry><material><ambient>0.6 0.6 0.6</ambient></material></visual><collision name="c"><geometry><box size="10 0.2 2"/></geometry></collision></link></model>
+  <!-- Plant equipment -->
+  <model name="pump_unit"><static>true</static><pose>3 2 0 0 0 0</pose><link name="body"><visual name="v"><geometry><box size="0.6 0.4 0.3"/></geometry><material><ambient>0.2 0.5 0.2</ambient></material></visual><collision name="c"><geometry><box size="0.6 0.4 0.3"/></geometry></collision></link></model>
+  <model name="tank_1"><static>true</static><pose>7 3 0 0 0 0</pose><link name="body"><visual name="v"><geometry><cylinder radius="0.5" length="2"/></geometry><material><ambient>0.4 0.5 0.6</ambient></material></visual><collision name="c"><geometry><cylinder radius="0.5" length="2"/></geometry></collision></link></model>
+  <model name="tank_2"><static>true</static><pose>7 6 0 0 0 0</pose><link name="body"><visual name="v"><geometry><cylinder radius="0.45" length="2.5"/></geometry><material><ambient>0.4 0.5 0.6</ambient></material></visual><collision name="c"><geometry><cylinder radius="0.45" length="2.5"/></geometry></collision></link></model>
+  <model name="pipe_1"><static>true</static><pose>2.5 4.5 0 0 0 0</pose><link name="body"><visual name="v"><geometry><cylinder radius="0.08" length="4"/></geometry><pose>0 0 0 0 1.57 0</pose><material><ambient>0.5 0.5 0.5</ambient></material></visual><collision name="c"><geometry><cylinder radius="0.08" length="4"/></geometry><pose>0 0 0 0 1.57 0</pose></collision></link></model>
+  <model name="pipe_2"><static>true</static><pose>4 7 1 0 0 0</pose><link name="body"><visual name="v"><geometry><cylinder radius="0.06" length="3"/></geometry><material><ambient>0.5 0.5 0.5</ambient></material></visual><collision name="c"><geometry><cylinder radius="0.06" length="3"/></geometry></collision></link></model>
+  <model name="valve_unit"><static>true</static><pose>2 8 0 0 0 0</pose><link name="body"><visual name="v"><geometry><box size="0.4 0.3 0.4"/></geometry><material><ambient>0.6 0.2 0.2</ambient></material></visual><collision name="c"><geometry><box size="0.4 0.3 0.4"/></geometry></collision></link></model>
+
+  <!-- ===== RECOVERY TEST OBSTACLES ===== -->
+  <!-- S1: Narrow corridor blocked — barrel in the centre passage -->
+  <model name="barrel_corridor"><static>true</static><pose>1.5 0 0.5 0 0 0</pose><link name="body"><visual name="v"><geometry><cylinder radius="0.35" length="0.8"/></geometry><material><ambient>0.8 0.4 0.0 1</ambient></material></visual><collision name="c"><geometry><cylinder radius="0.35" length="0.8"/></geometry></collision></link></model>
+
+  <!-- S2: Corner blocked — crate near tank_1 corner -->
+  <model name="crate_corner"><static>true</static><pose>6 1.5 0.4 0 0 0</pose><link name="body"><visual name="v"><geometry><box size="0.6 0.6 0.6"/></geometry><material><ambient>0.8 0.3 0.3 1</ambient></material></visual><collision name="c"><geometry><box size="0.6 0.6 0.6"/></geometry></collision></link></model>
+
+  <!-- S3: Dead-end barrier — pallets block access to valve station -->
+  <model name="pallet_1"><static>true</static><pose>0.5 3.5 0.3 0 0 0</pose><link name="body"><visual name="v"><geometry><box size="0.8 0.3 0.5"/></geometry><material><ambient>0.6 0.4 0.2 1</ambient></material></visual><collision name="c"><geometry><box size="0.8 0.3 0.5"/></geometry></collision></link></model>
+  <model name="pallet_2"><static>true</static><pose>1.8 3.5 0.3 0 0 0</pose><link name="body"><visual name="v"><geometry><box size="0.8 0.3 0.5"/></geometry><material><ambient>0.6 0.4 0.2 1</ambient></material></visual><collision name="c"><geometry><box size="0.8 0.3 0.5"/></geometry></collision></link></model>
+</world></sdf>

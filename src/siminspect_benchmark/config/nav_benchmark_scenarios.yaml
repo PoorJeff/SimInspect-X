@@ -1,0 +1,29 @@
+# E2 Navigation benchmark scenarios
+scenarios:
+  - id: "E2_nominal"
+    condition: nominal
+    world: plant.sdf
+    start: {x: 0.0, y: 0.0, yaw: 0.0}
+    goal:  {x: 2.2, y: 1.8, yaw: 0.0}   # pump station
+    timeout_s: 120
+
+  - id: "E2_narrow_aisle"
+    condition: narrow_aisle
+    world: blocked_test.sdf
+    start: {x: 0.0, y: 0.0, yaw: 0.0}
+    goal:  {x: 2.5, y: 4.5, yaw: 1.57}  # pipe checkpoint, through narrow gap
+    timeout_s: 120
+
+  - id: "E2_dynamic_obstacle"
+    condition: dynamic_obstacle
+    world: plant.sdf
+    start: {x: 0.0, y: 0.0, yaw: 0.0}
+    goal:  {x: 4.0, y: 2.6, yaw: 3.14}  # near tank_1 (inside walls)
+    timeout_s: 150
+
+  - id: "E2_blocked_route"
+    condition: blocked_route
+    world: blocked_test.sdf
+    start: {x: 0.0, y: 0.0, yaw: 0.0}
+    goal:  {x: 1.2, y: 4.5, yaw: -1.57}  # near valve station (inside walls)
+    timeout_s: 180

@@ -1,14 +1,12 @@
-﻿cmake_minimum_required(VERSION 3.8)
+cmake_minimum_required(VERSION 3.8)
 project(siminspect_benchmark)
 find_package(ament_cmake REQUIRED)
 find_package(ament_cmake_python REQUIRED)
 ament_python_install_package(${PROJECT_NAME})
-install(PROGRAMS
-  ${PROJECT_NAME}/asset_registry.py
-  DESTINATION lib/${PROJECT_NAME}
-)
+install(PROGRAMS ${PROJECT_NAME}/asset_registry.py ${PROJECT_NAME}/localisation_eval.py ${PROJECT_NAME}/ground_truth_publisher.py ${PROJECT_NAME}/nav_benchmark.py ${PROJECT_NAME}/run_b0_benchmark.py ${PROJECT_NAME}/run_p1_benchmark.py ${PROJECT_NAME}/run_p2_benchmark.py DESTINATION lib/${PROJECT_NAME})
+install(DIRECTORY config launch DESTINATION share/${PROJECT_NAME})
 if(BUILD_TESTING)
   find_package(ament_cmake_pytest REQUIRED)
-  ament_add_pytest_test(test_dummy test/test_dummy.py)
+  ament_add_pytest_test(test_localisation_eval test/test_localisation_eval.py)
 endif()
 ament_package()

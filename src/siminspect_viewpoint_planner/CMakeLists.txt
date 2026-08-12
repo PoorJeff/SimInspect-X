@@ -1,16 +1,15 @@
-﻿cmake_minimum_required(VERSION 3.8)
+cmake_minimum_required(VERSION 3.8)
 project(siminspect_viewpoint_planner)
 find_package(ament_cmake REQUIRED)
 find_package(ament_cmake_python REQUIRED)
 ament_python_install_package(${PROJECT_NAME})
+install(PROGRAMS ${PROJECT_NAME}/candidate_generator.py ${PROJECT_NAME}/viewpoint_markers.py ${PROJECT_NAME}/b0_selector.py ${PROJECT_NAME}/p1_selector.py ${PROJECT_NAME}/p2_selector.py DESTINATION lib/${PROJECT_NAME})
 install(DIRECTORY launch DESTINATION share/${PROJECT_NAME})
-install(PROGRAMS
-  ${PROJECT_NAME}/candidate_generator.py
-  ${PROJECT_NAME}/viewpoint_markers.py
-  DESTINATION lib/${PROJECT_NAME}
-)
 if(BUILD_TESTING)
   find_package(ament_cmake_pytest REQUIRED)
-  ament_add_pytest_test(test_dummy test/test_dummy.py)
+  ament_add_pytest_test(test_candidate_generator test/test_candidate_generator.py)
+  ament_add_pytest_test(test_quality_scorer test/test_quality_scorer.py)
+  ament_add_pytest_test(test_p1_selector test/test_p1_selector.py)
+  ament_add_pytest_test(test_p2_selector test/test_p2_selector.py)
 endif()
 ament_package()

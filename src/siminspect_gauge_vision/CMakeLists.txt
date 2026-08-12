@@ -1,18 +1,12 @@
 cmake_minimum_required(VERSION 3.8)
 project(siminspect_gauge_vision)
-
-if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-  add_compile_options(-Wall -Wextra -Wpedantic)
-endif()
-
 find_package(ament_cmake REQUIRED)
 find_package(ament_cmake_python REQUIRED)
-
 ament_python_install_package(${PROJECT_NAME})
-
 if(BUILD_TESTING)
   find_package(ament_cmake_pytest REQUIRED)
-  ament_add_pytest_test(test_dummy test/test_dummy.py)
+  ament_add_pytest_test(test_gauge_detector test/test_gauge_detector.py)
+  ament_add_pytest_test(test_gauge_reader test/test_gauge_reader.py)
+  ament_add_pytest_test(test_confidence test/test_confidence.py)
 endif()
-
 ament_package()

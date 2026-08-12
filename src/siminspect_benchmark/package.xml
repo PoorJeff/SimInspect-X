@@ -1,4 +1,4 @@
-﻿<?xml version="1.0"?>
+<?xml version="1.0"?>
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
   <name>siminspect_benchmark</name>
@@ -11,7 +11,7 @@
   <depend>rclpy</depend>
   <depend>siminspect_interfaces</depend>
   <depend>python3-yaml</depend>
-  <depend>ament_index_python</depend>
+  <depend>ament_index_python</depend><depend>ros_gz_bridge</depend>
   <test_depend>ament_cmake_pytest</test_depend>
   <test_depend>python3-pytest</test_depend>
   <export>

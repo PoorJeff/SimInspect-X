@@ -1,0 +1,9 @@
+# P1 perception-aware experiment (paired with B0, same E4 conditions)
+experiment: P1_perception_aware
+paired_with: B0_fixed_waypoint
+conditions:
+  - id: E4_normal
+  - id: E4_occluded
+  - id: E4_pose_perturbation
+  - id: E4_blur_noise
+  - id: E4_mixed

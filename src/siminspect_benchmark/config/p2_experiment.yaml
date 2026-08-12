@@ -1,0 +1,14 @@
+# P2 adaptive re-inspection experiment (paired with P1, same E4 conditions)
+experiment: P2_adaptive
+paired_with: P1_perception_aware
+conditions:
+  - id: E4_normal
+    start: {x: 0.0, y: 0.0}
+  - id: E4_occluded
+    start: {x: 0.0, y: 0.0}
+  - id: E4_pose_perturbation
+    start: {x: 0.0, y: 0.0}
+  - id: E4_blur_noise
+    start: {x: 0.0, y: 0.0}
+  - id: E4_mixed
+    start: {x: 0.0, y: 0.0}

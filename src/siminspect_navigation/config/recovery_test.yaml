@@ -1,0 +1,24 @@
+# Recovery test scenarios for Nav2 blocked-route validation
+# Robot starts at origin (0,0,0)
+scenarios:
+
+  - id: "S1_narrow_corridor"
+    description: "Barrel blocks centre passage; robot must spin/backup and replan"
+    start: {x: 0.0, y: 0.0, yaw: 0.0}
+    goal:  {x: 2.5, y: 4.5, yaw: 1.57}
+    obstacle: barrel_corridor
+    expected_recovery: "spin, backup, or replan around obstacle"
+
+  - id: "S2_corner_blocked"
+    description: "Crate blocks corner near tank_1; robot must find alternate route"
+    start: {x: 0.0, y: 0.0, yaw: 0.0}
+    goal:  {x: 6.2, y: 2.6, yaw: 3.14}
+    obstacle: crate_corner
+    expected_recovery: "spin, backup, or replan around obstacle"
+
+  - id: "S3_dead_end"
+    description: "Pallets completely block path to valve; robot detects dead-end and recovers"
+    start: {x: 0.0, y: 0.0, yaw: 0.0}
+    goal:  {x: 1.2, y: 7.8, yaw: -1.57}
+    obstacle: pallet_1, pallet_2
+    expected_recovery: "spin, backup, wait, then explore alternative path"

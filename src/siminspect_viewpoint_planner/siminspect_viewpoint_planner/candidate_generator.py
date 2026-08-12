@@ -1,6 +1,7 @@
-﻿#!/usr/bin/env python3
+#!/usr/bin/env python3
 """Generate candidate viewpoints from /inspection/assets using 07_ASSET_AND_VIEWPOINT_MODEL algorithm."""
 import math, yaml
+from ray_caster import RayCaster
 import rclpy
 from rclpy.node import Node
 from siminspect_interfaces.msg import AssetArray, CandidateViewpoint, CandidateViewpointArray
@@ -22,16 +23,10 @@ class CandidateGenerator(Node):
 
     def generate(self, asset):
         """Generate N candidates on arc per 07_ASSET_AND_VIEWPOINT_MODEL.md."""
-        # Pose of gauge face centre
         px, py = asset.map_pose.position.x, asset.map_pose.position.y
-        # Extract yaw from quaternion
         q = asset.map_pose.orientation
         yaw_g = 2 * math.atan2(q.z, q.w)
-        # Inspection params (defaults if not provided via extended Asset msg)
-        d_desired = 0.8
-        N = 7
-        arc_deg = 120
-
+        d_desired = 0.8; N = 7; arc_deg = 120
         half = math.radians(arc_deg / 2)
         step = (2 * half) / (N - 1) if N > 1 else 0
         arc_center = yaw_g
@@ -40,17 +35,18 @@ class CandidateGenerator(Node):
             angle_i = arc_center - half + i * step
             x_i = px + d_desired * math.cos(angle_i)
             y_i = py + d_desired * math.sin(angle_i)
-            yaw_i = angle_i + math.pi  # robot faces gauge
-            yaw_i = math.atan2(math.sin(yaw_i), math.cos(yaw_i))  # normalize
-
+            yaw_i = angle_i + math.pi
+            yaw_i = math.atan2(math.sin(yaw_i), math.cos(yaw_i))
             vp = CandidateViewpoint()
             vp.pose.position.x = x_i
             vp.pose.position.y = y_i
             vp.pose.position.z = 0.0
             vp.pose.orientation.z = math.sin(yaw_i / 2)
             vp.pose.orientation.w = math.cos(yaw_i / 2)
-            vp.visible = True   # P2: no costmap yet; always visible
-            vp.quality_score = 0.0  # P6: full scoring later
+            vp.visible = True
+            if hasattr(self, "caster"):
+                vp.visible = self.caster.visible(x_i, y_i, px, py)
+            vp.quality_score = 0.0
             candidates.append(vp)
         return candidates
 

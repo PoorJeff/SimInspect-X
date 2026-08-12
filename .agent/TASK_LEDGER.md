@@ -17,24 +17,24 @@ Status values: TODO / IN_PROGRESS / READY_FOR_REVIEW / ACCEPTED / BLOCKED / DEFE
 | P2-T03 | LiDAR/IMU/RGB sensors | ACCEPTED | verified PASS, audited PASS |
 | P2-T04 | Plant world and semantic asset registry | ACCEPTED | verified PASS, audited PASS |
 | P2-T05 | Candidate viewpoint visualisation | ACCEPTED | verified PASS, audited PASS |
-| P3-T01 | Wheel odom + IMU EKF | TODO | filtered odom |
-| P3-T02 | SLAM Toolbox mapping | TODO | saved map |
-| P3-T03 | Saved-map localisation | TODO | repeatable startup |
-| P3-T04 | localisation evaluation harness | TODO | RMSE results |
-| P4-T01 | Nav2 baseline | TODO | goal navigation |
-| P4-T02 | MPPI configuration | TODO | stable plant routes |
-| P4-T03 | blocked-route recovery | TODO | recovery evidence |
-| P4-T04 | navigation baseline benchmark | TODO | paired trials |
-| P5-T01 | synthetic gauge asset generator | TODO | labelled gauges |
-| P5-T02 | gauge detection/rectification | TODO | image tests |
-| P5-T03 | gauge value estimator | TODO | MAE/RMSE |
-| P5-T04 | confidence estimator | TODO | calibrated proxy |
-| P6-T01 | candidate viewpoint generator | TODO | deterministic candidates |
-| P6-T02 | geometric visibility/quality scorer | TODO | unit tests |
-| P6-T03 | fixed waypoint baseline | TODO | baseline runs |
-| P6-T04 | perception-aware selector | TODO | comparison runs |
-| P6-T05 | adaptive reinspection logic | TODO | low-confidence recovery |
-| P7-T01 | precision approach interface | TODO | controller handoff |
+| P3-T01 | Wheel odom + IMU EKF | ACCEPTED | verified PASS, audited PASS |
+| P3-T02 | SLAM Toolbox mapping | ACCEPTED | verified PASS, audited PASS |
+| P3-T03 | Saved-map localisation | ACCEPTED | verified PASS, audited PASS |
+| P3-T04 | localisation evaluation harness | ACCEPTED | verified PASS, audited PASS |
+| P4-T01 | Nav2 baseline | ACCEPTED | verified PASS, audited PASS |
+| P4-T02 | MPPI configuration | ACCEPTED | verified PASS, audited PASS |
+| P4-T03 | blocked-route recovery | ACCEPTED | verified PASS, audited PASS |
+| P4-T04 | navigation baseline benchmark | ACCEPTED | verified PASS, audited PASS |
+| P5-T01 | synthetic gauge asset generator | ACCEPTED | verified PASS, audited PASS |
+| P5-T02 | gauge detection/rectification | ACCEPTED | verified PASS, audited PASS |
+| P5-T03 | gauge value estimator | ACCEPTED | verified PASS, audited PASS |
+| P5-T04 | confidence estimator | ACCEPTED | verified PASS, audited PASS |
+| P6-T01 | candidate viewpoint generator | ACCEPTED | verified PASS, audited PASS |
+| P6-T02 | geometric visibility/quality scorer | ACCEPTED | verified PASS, audited PASS |
+| P6-T03 | fixed waypoint baseline | ACCEPTED | verified PASS, audited PASS |
+| P6-T04 | perception-aware selector | ACCEPTED | verified PASS, audited PASS |
+| P6-T05 | adaptive reinspection logic | ACCEPTED | verified PASS, audited PASS |
+| P7-T01 | precision approach interface | READY_FOR_REVIEW | controller handoff |
 | P7-T02 | PID controller | TODO | tracking tests |
 | P7-T03 | linear MPC controller | TODO | constraint tests |
 | P7-T04 | PID vs MPC paired benchmark | TODO | results/plots |

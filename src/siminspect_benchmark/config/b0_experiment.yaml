@@ -1,0 +1,23 @@
+# B0 fixed-waypoint baseline experiment (E4 conditions)
+experiment: B0_fixed_waypoint
+conditions:
+  - id: E4_normal
+    description: "Nominal conditions, no perturbations"
+    world: plant.sdf
+    start: {x: 0.0, y: 0.0, yaw: 0.0}
+  - id: E4_occluded
+    description: "Fixed waypoint partially occluded by barrel"
+    world: blocked_test.sdf
+    start: {x: 0.0, y: 0.0, yaw: 0.0}
+  - id: E4_pose_perturbation
+    description: "Robot starts with initial pose offset"
+    world: plant.sdf
+    start: {x: 0.3, y: -0.3, yaw: 0.3}
+  - id: E4_blur_noise
+    description: "Camera image degraded with blur and noise"
+    world: plant.sdf
+    start: {x: 0.0, y: 0.0, yaw: 0.0}
+  - id: E4_mixed
+    description: "Combined occlusion + pose perturbation"
+    world: blocked_test.sdf
+    start: {x: 0.3, y: -0.3, yaw: 0.3}

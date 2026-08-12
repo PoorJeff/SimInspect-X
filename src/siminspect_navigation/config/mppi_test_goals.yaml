@@ -1,0 +1,23 @@
+# MPPI test waypoints for 10x10m plant world
+# Robot starts near origin (0,0)
+goals:
+  - name: "pump_station"
+    x: 2.2
+    y: 1.8
+    yaw: 0.0
+  - name: "tank_1"
+    x: 6.2
+    y: 2.6
+    yaw: 3.14
+  - name: "tank_2"
+    x: 6.2
+    y: 5.6
+    yaw: 0.0
+  - name: "valve_station"
+    x: 1.2
+    y: 7.8
+    yaw: -1.57
+  - name: "pipe_checkpoint"
+    x: 3.2
+    y: 4.5
+    yaw: 1.57

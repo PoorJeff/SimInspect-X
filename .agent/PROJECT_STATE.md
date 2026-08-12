@@ -1,12 +1,28 @@
 # PROJECT_STATE
 
-Status: P1_COMPLETE / P2_READY
-Current phase: P2_ROBOT_WORLD
+Status: P7_IN_PROGRESS
+Current phase: P7_PRECISION_CONTROL
 
 ## Project identity
 Name: SimInspect-X
 Public title:
 "Perception-Aware Autonomous Industrial Inspection in a Simulation-First Plant Testbed"
+
+## Completed phases
+- P0: Research freeze (5/5 ACCEPTED)
+- P1: Docker/ROS/CI (5/5 ACCEPTED)
+- P2: URDF/Gazebo/sensors/plant world (5/5 ACCEPTED)
+- P3: EKF/SLAM/localisation eval (4/4 ACCEPTED)
+- P4: Nav2 baseline/MPPI/recovery/benchmark (4/4 ACCEPTED)
+- P5: Synthetic gauge dataset/detector/reader/confidence (4/4 ACCEPTED)
+- P6: Viewpoint planning (candidate gen, quality scorer, B0, P1, P2 selectors) (5/5 ACCEPTED)
+
+## Current phase
+P7: Precision approach control
+- P7-T01: PrecisionApproach action interface + handoff manager (ACCEPTED)
+- P7-T02: PID controller (TODO)
+- P7-T03: Linear MPC controller (TODO)
+- P7-T04: PID vs MPC paired benchmark (TODO)
 
 ## Gold Core
 - differential-drive AMR in Gazebo;
@@ -39,6 +55,11 @@ ROS 2, Gazebo, Nav2, SLAM Toolbox, robot_localization.
 - real hardware;
 - photorealistic simulation.
 
-Next gate:
-P2 must deliver robot URDF, gz_ros2_control integration, sensors, plant world and candidate viewpoint visualisation.
-P1 must deliver clean colcon build, headless tests, and CI green from documented setup.
+## Active constraints
+- Windows environment: no ROS 2/colcon/Gazebo runtime. All code is static-only.
+- Push to GitHub fails without VPN.
+- P3-P7 code largely uncommitted in working tree.
+
+## Next gate
+P7 must deliver precision approach interface (T01), PID (T02), MPC (T03), and paired benchmark (T04).
+P8 will deliver mission executive, inspection reports, and retry policy.
