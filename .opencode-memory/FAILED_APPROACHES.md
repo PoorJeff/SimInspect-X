@@ -45,3 +45,12 @@ Approaches that failed or were reverted, and why. Do not repeat.
   Test expectation was wrong, not the selector.
 - Replacement: assert the pose lies on the valid inspection arc
   (yaw in [2pi/3, 4pi/3]) instead of exact centre.
+
+## FA-008 — Single pytest invocation across two ROS packages
+- Failure: `pytest src/pkgA/test src/pkgB/test` fails collection with
+  "import file mismatch / unique basename" because both packages ship
+  test/test_dummy.py (module basename collision).
+- Replacement: run each package's tests separately
+  (`pytest src/pkgA/test` then `pytest src/pkgB/test`), or rename/remove
+  the dummy tests before P10 cleanup.
+

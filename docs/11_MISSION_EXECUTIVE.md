@@ -30,18 +30,54 @@ Per asset:
 
 ## Result record
 
+Top-level report (schema v1.0):
+
 ```json
 {
-  "asset_id": "gauge_pump_01",
-  "attempts": 2,
-  "selected_viewpoints": ["v3", "v5"],
-  "estimated_value": 42.1,
-  "confidence": 0.87,
-  "navigation_time_s": 12.3,
-  "inspection_time_s": 4.1,
-  "status": "success"
+  "schema_version": "1.0",
+  "mission_timestamp": "2026-08-13T01:30:00+00:00",
+  "mission_time_s": 612.4,
+  "num_assets": 5,
+  "num_results": 5,
+  "success_count": 4,
+  "results": [
+    {
+      "asset_id": "gauge_pump_01",
+      "attempts": 2,
+      "selected_viewpoints": ["v3", "v5"],
+      "viewpoint_attempts_detail": [
+        {"attempt": 1, "viewpoint": "v3", "confidence": 0.61},
+        {"attempt": 2, "viewpoint": "v5", "confidence": 0.87}
+      ],
+      "estimated_value": 42.1,
+      "confidence": 0.87,
+      "navigation_time_s": 12.3,
+      "inspection_time_s": 4.1,
+      "status": "success",
+      "failure_reason": null,
+      "true_value": null,
+      "absolute_error": null
+    }
+  ]
 }
 ```
 
-The benchmark layer may append true value and absolute error after the mission.
-Production mission code must not know the hidden true value.
+### failure_reason enum
+
+| Value | Meaning |
+|---|---|
+| nav_failed | Nav2 goal rejected/unavailable, or nav retries exhausted |
+| precision_failed | PrecisionApproach failed or handoff retry signal |
+| low_confidence | reader retries exhausted below the 0.80 threshold |
+| timeout | reserved: no timeout signal source in the current action interface |
+
+`failure_reason` is `null` for successful records. Failed assets are always
+recorded: nav/approach/reader exhaustion transitions to RECORD (P8-T02
+boundary decision, approved).
+
+### Benchmark firewall
+
+`true_value` and `absolute_error` are exported as literal `null` by mission
+code. The benchmark layer may append true value and absolute error after the
+mission, keyed by `asset_id`. Production mission code must not know the hidden
+true value and must never read or fill these fields.

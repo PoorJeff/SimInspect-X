@@ -99,9 +99,12 @@ def test_nav_exhaustion_no_infinite_loop():
         for _ in range(MAX_NAV_RETRIES):
             sm.on_event(E_NAV_FAIL)
 
-    # After 3 viewpoint attempts all consumed, must move to next asset (no loop)
-    assert sm.state == S_SELECT_ASSET, "Should escape to next asset after viewpoints exhausted"
+    # After 3 viewpoint attempts all consumed, must record the failure (no loop)
+    assert sm.state == S_RECORD, "Should record failure after viewpoints exhausted"
     assert sm.viewpoint_attempts == MAX_VIEWPOINT_ATTEMPTS
+    assert sm.last_failure_reason == "nav_failed"
+    sm.on_event(E_RECORDED)
+    assert sm.state == S_SELECT_ASSET
 
 def test_viewpoint_attempt_limit():
     """Approach failures should retry up to MAX_VIEWPOINT_ATTEMPTS."""
@@ -115,7 +118,8 @@ def test_viewpoint_attempt_limit():
         sm.state = S_PRECISION_APPROACH
 
     sm.on_event(E_APPROACH_FAIL)
-    assert sm.state == S_SELECT_ASSET, "Should move on after all viewpoint attempts exhausted"
+    assert sm.state == S_RECORD, "Should record failure after all viewpoint attempts exhausted"
+    assert sm.last_failure_reason == "precision_failed"
 
 def test_reader_retry_limit():
     """Invalid readings retry up to MAX_READER_RETRIES."""
@@ -203,3 +207,34 @@ def test_five_asset_mission_flow():
 
     assert completed == 5, f"All 5 assets should complete, got {completed}"
     assert sm.state == S_RETURN_HOME
+
+def test_failure_reason_tracking():
+    """Failure events set last_failure_reason with the schema enum value."""
+    sm = MissionStateMachine()
+
+    sm.state = S_NAVIGATE
+    sm.on_event(E_NAV_FAIL)
+    assert sm.last_failure_reason == "nav_failed"
+
+    sm.state = S_PRECISION_APPROACH
+    sm.on_event(E_APPROACH_FAIL)
+    assert sm.last_failure_reason == "precision_failed"
+
+    sm.state = S_PRECISION_APPROACH
+    sm.on_event(E_RETRY_VIEWPOINT)
+    assert sm.last_failure_reason == "precision_failed"
+
+    sm.state = S_VALIDATE
+    sm.on_event(E_READING_INVALID)
+    assert sm.last_failure_reason == "low_confidence"
+
+
+def test_failure_reason_reset_on_new_asset():
+    """Advancing to a new asset clears the previous failure reason."""
+    sm = MissionStateMachine()
+    sm.on_event(E_START)
+    sm.load_assets([FakeAsset("a1"), FakeAsset("a2")])
+    sm.last_failure_reason = "nav_failed"
+
+    sm.on_event(E_TICK)  # advance to asset a1
+    assert sm.last_failure_reason is None

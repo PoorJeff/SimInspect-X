@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Mission executive: multi-asset inspection state machine (P8-T01).
+"""Mission executive: multi-asset inspection state machine (P8-T01/T02).
 
 Implements docs/11 state machine:
 IDLE -> LOAD_MISSION -> SELECT_ASSET -> SELECT_VIEWPOINT -> NAVIGATE
@@ -21,6 +21,19 @@ from nav_msgs.msg import Odometry
 from std_msgs.msg import String
 from siminspect_interfaces.msg import AssetArray, GaugeReading, MissionState
 from siminspect_interfaces.action import PrecisionApproach
+
+# Report schema (P8-T02). Dual import layout: ROS site-packages vs the
+# Windows test layout where the package dir is on sys.path.
+try:
+    from siminspect_mission.report_schema import (
+        VALID_CONFIDENCE, utc_now_iso, update_confidence_log,
+        build_result_record, build_mission_report,
+    )
+except ImportError:
+    from report_schema import (
+        VALID_CONFIDENCE, utc_now_iso, update_confidence_log,
+        build_result_record, build_mission_report,
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -78,6 +91,7 @@ class MissionStateMachine:
         self.viewpoint_attempts = 0
         self.reader_retries = 0
         self.results = []
+        self.last_failure_reason = None
 
     # -- event handling ------------------------------------------------
 
@@ -98,6 +112,7 @@ class MissionStateMachine:
                 self.nav_retries = 0
                 self.viewpoint_attempts = 0
                 self.reader_retries = 0
+                self.last_failure_reason = None
                 self.state = S_SELECT_VIEWPOINT
             else:
                 self.state = S_RETURN_HOME
@@ -110,6 +125,7 @@ class MissionStateMachine:
                 self.nav_retries = 0
                 self.state = S_PRECISION_APPROACH
             elif event == E_NAV_FAIL:
+                self.last_failure_reason = "nav_failed"
                 self.nav_retries += 1
                 if self.nav_retries < MAX_NAV_RETRIES:
                     self.state = S_NAVIGATE       # retry same viewpoint
@@ -119,17 +135,18 @@ class MissionStateMachine:
                     if self.viewpoint_attempts < MAX_VIEWPOINT_ATTEMPTS:
                         self.state = S_SELECT_VIEWPOINT  # try next viewpoint
                     else:
-                        self.state = S_SELECT_ASSET      # move on, mark failed at RECORD
+                        self.state = S_RECORD      # record failure (P8-T02)
 
         elif s == S_PRECISION_APPROACH:
             if event == E_APPROACH_OK:
                 self.state = S_INSPECT
             elif event == E_APPROACH_FAIL or event == E_RETRY_VIEWPOINT:
+                self.last_failure_reason = "precision_failed"
                 self.viewpoint_attempts += 1
                 if self.viewpoint_attempts < MAX_VIEWPOINT_ATTEMPTS:
                     self.state = S_SELECT_VIEWPOINT
                 else:
-                    self.state = S_SELECT_ASSET   # move on, mark failed at RECORD
+                    self.state = S_RECORD      # record failure (P8-T02)
 
         elif s == S_INSPECT:
             if event == E_READING_RECEIVED:
@@ -140,6 +157,7 @@ class MissionStateMachine:
             if event == E_READING_VALID:
                 self.state = S_RECORD
             elif event == E_READING_INVALID:
+                self.last_failure_reason = "low_confidence"
                 self.reader_retries += 1
                 if self.reader_retries < MAX_READER_RETRIES:
                     self.state = S_INSPECT        # retry read
@@ -216,6 +234,7 @@ class MissionExecutor(Node):
         self.start_time = time.time()
         self.last_state = S_IDLE
         self.asset_viewpoints = []   # poses tried for current asset
+        self.asset_confidence_log = []  # last reading confidence per attempt
         self.asset_nav_time = 0.0    # navigation duration for current asset
         self.asset_inspect_time = 0.0  # precision+inspect duration
         self._nav_start_ts = None
@@ -236,15 +255,16 @@ class MissionExecutor(Node):
 
     def _cb_viewpoint(self, msg: PoseStamped):
         self.selected_viewpoint = msg
-        vp = f"({msg.pose.position.x:.2f},{msg.pose.position.y:.2f})"
-        if vp not in self.asset_viewpoints:
-            self.asset_viewpoints.append(vp)
         if self.sm.state == S_SELECT_VIEWPOINT:
+            vp = f"({msg.pose.position.x:.2f},{msg.pose.position.y:.2f})"
+            self.asset_viewpoints.append(vp)   # one entry per attempt (P8-T02)
             self.sm.on_event(E_VIEWPOINT_SELECTED)
 
     def _cb_reading(self, msg: GaugeReading):
         self.current_reading = msg
         if self.sm.state == S_INSPECT:
+            self.asset_confidence_log = update_confidence_log(
+                self.asset_viewpoints, self.asset_confidence_log, msg.confidence)
             self.sm.on_event(E_READING_RECEIVED)
 
     def _cb_retry(self, msg: String):
@@ -275,13 +295,22 @@ class MissionExecutor(Node):
             pass  # assets arrive via topic
 
         elif s == S_SELECT_ASSET:
+            # New asset: reset per-asset state before E_TICK advances.
+            # current_reading MUST be cleared here: a failed asset that
+            # produced no reading must not reuse the previous asset's
+            # reading in _record_result (audit finding #1).
+            self.current_reading = None
+            self.selected_viewpoint = None
+            self.asset_viewpoints = []
+            self.asset_confidence_log = []
+            self.asset_nav_time = 0.0
+            self.asset_inspect_time = 0.0
             self.sm.on_event(E_TICK)  # advance to next asset or RETURN_HOME
 
         elif s == S_SELECT_VIEWPOINT:
             self.selected_viewpoint = None
-            self.asset_viewpoints = []
-            self.asset_nav_time = 0.0
-            self.asset_inspect_time = 0.0
+            # Per-asset accumulators are NOT reset here: this state is
+            # re-entered on every attempt retry (P8-T02).
             # Viewpoint planner publishes automatically; we just wait.
             # (In a full system we might trigger the planner here.)
 
@@ -400,7 +429,7 @@ class MissionExecutor(Node):
         if self.current_reading is None:
             self.sm.on_event(E_READING_INVALID)
             return
-        if self.current_reading.confidence >= 0.80:
+        if self.current_reading.confidence >= VALID_CONFIDENCE:
             self.sm.on_event(E_READING_VALID)
         else:
             self.get_logger().warn(
@@ -415,16 +444,17 @@ class MissionExecutor(Node):
             return
 
         r = self.current_reading
-        record = {
-            "asset_id": asset.id,
-            "attempts": self.sm.viewpoint_attempts + 1,
-            "selected_viewpoints": self.asset_viewpoints,
-            "estimated_value": r.estimated_value if r else None,
-            "confidence": r.confidence if r else 0.0,
-            "navigation_time_s": round(self.asset_nav_time, 2),
-            "inspection_time_s": round(self.asset_inspect_time, 2),
-            "status": "success" if (r and r.confidence >= 0.80) else "failed",
-        }
+        record = build_result_record(
+            asset_id=asset.id,
+            attempts=min(self.sm.viewpoint_attempts + 1, MAX_VIEWPOINT_ATTEMPTS),
+            viewpoints=self.asset_viewpoints,
+            confidence_log=self.asset_confidence_log,
+            estimated_value=r.estimated_value if r else None,
+            confidence=r.confidence if r else None,
+            navigation_time_s=self.asset_nav_time,
+            inspection_time_s=self.asset_inspect_time,
+            failure_reason=self.sm.last_failure_reason,
+        )
         self.sm.add_result(record)
         self.get_logger().info(f"Recorded: {record}")
         self.sm.on_event(E_RECORDED)
@@ -453,13 +483,12 @@ class MissionExecutor(Node):
         future.add_done_callback(self._home_done_cb)
 
     def _export_report(self):
-        report = {
-            "mission_time_s": round(time.time() - self.start_time, 2),
-            "num_assets": len(self.sm.assets),
-            "num_results": len(self.sm.results),
-            "success_count": sum(1 for r in self.sm.results if r["status"] == "success"),
-            "results": self.sm.results,
-        }
+        report = build_mission_report(
+            results=self.sm.results,
+            num_assets=len(self.sm.assets),
+            mission_time_s=time.time() - self.start_time,
+            timestamp_iso=utc_now_iso(),
+        )
         out = os.path.join(os.getcwd(), "mission_report.json")
         with open(out, "w") as f:
             json.dump(report, f, indent=2)

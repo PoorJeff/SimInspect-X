@@ -58,3 +58,14 @@ Durable decisions with IDs. Status: ACTIVE / SUPERSEDED.
   approach_radius_multiplier (2.0) x desired_distance_m (0.8) = 1.6 m AND
   robot nearly stopped (|v|<0.05) AND PrecisionApproach server available
 - Source: docs/06, P7-T01
+
+## D-010 — Nav retry exhaustion consumes a viewpoint attempt
+- Status: ACTIVE
+- Decision: when MAX_NAV_RETRIES is exhausted for a viewpoint, the state
+  machine resets nav_retries, increments viewpoint_attempts, and goes to
+  S_SELECT_VIEWPOINT (attempts left) or S_SELECT_ASSET (none left). This
+  guarantees the SELECT_VIEWPOINT<->NAVIGATE cycle is bounded by
+  MAX_VIEWPOINT_ATTEMPTS, satisfying docs/11 "No infinite loops".
+- Source: audit post-condition + verify C2 FAIL, P8-T01 (commit dc8cb7b)
+- Impact: mission_executor.py S_NAVIGATE branch; test_nav_exhaustion_no_infinite_loop
+
