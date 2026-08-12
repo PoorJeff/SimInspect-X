@@ -1,4 +1,4 @@
-# SimInspect-X Dockerfile
+﻿# SimInspect-X Dockerfile
 # Ubuntu 24.04 + ROS 2 Jazzy + Gazebo Harmonic
 # See ADR-001 and docs/05_TECH_STACK.md
 
@@ -39,6 +39,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     python3-colcon-common-extensions \
     python3-vcstool \
     python3-pip \
+    python3-yaml \
+    ros-jazzy-ament-index-python \
     && rm -rf /var/lib/apt/lists/*
 
 # Python packages for vision, control, analysis

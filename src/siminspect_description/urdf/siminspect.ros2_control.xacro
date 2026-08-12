@@ -1,0 +1,41 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <xacro:macro name="siminspect_ros2_control" params="name prefix use_sim">
+    <ros2_control name="${name}" type="system">
+      <hardware>
+        <xacro:if value="${use_sim}">
+          <plugin>gz_ros2_control/GazeboSimSystem</plugin>
+        </xacro:if>
+        <xacro:unless value="${use_sim}">
+          <plugin>siminspect_control/SimInspectHardware</plugin>
+        </xacro:unless>
+      </hardware>
+
+      <joint name="left_wheel_joint">
+        <command_interface name="velocity">
+          <param name="min">-5.0</param>
+          <param name="max">5.0</param>
+        </command_interface>
+        <state_interface name="position"/>
+        <state_interface name="velocity"/>
+      </joint>
+
+      <joint name="right_wheel_joint">
+        <command_interface name="velocity">
+          <param name="min">-5.0</param>
+          <param name="max">5.0</param>
+        </command_interface>
+        <state_interface name="position"/>
+        <state_interface name="velocity"/>
+      </joint>
+
+      <sensor name="imu_sensor">
+        <state_interface name="orientation"/>
+        <state_interface name="angular_velocity"/>
+        <state_interface name="linear_acceleration"/>
+      </sensor>
+    </ros2_control>
+  </xacro:macro>
+
+</robot>

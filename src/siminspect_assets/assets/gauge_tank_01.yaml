@@ -1,0 +1,20 @@
+﻿id: gauge_tank_01
+asset_type: analog_gauge
+map_pose:
+  x: 7
+  y: 2.6
+  z: 0.8
+  yaw: 1.57
+gauge:
+  min_value: 0
+  max_value: 200
+  unit: kPa
+inspection:
+  desired_distance_m: 0.7
+  allowed_distance_m: [0.5, 1.2]
+  max_incidence_deg: 45
+  candidate_count: 7
+  candidate_arc_deg: 120
+  confidence_threshold: 0.80
+  max_attempts: 3
+  approach_radius_multiplier: 2.0

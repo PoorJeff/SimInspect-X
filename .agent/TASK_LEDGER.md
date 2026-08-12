@@ -12,11 +12,11 @@ Status values: TODO / IN_PROGRESS / READY_FOR_REVIEW / ACCEPTED / BLOCKED / DEFE
 | P1-T01 | Reproducible Ubuntu/ROS setup | ACCEPTED | verified PASS, audited PASS |
 | P1-T02 | ROS package skeleton | ACCEPTED | verified PASS, audited PASS |
 | P1-T03 | CI build/lint/unit smoke | ACCEPTED | verified PASS, audited PASS |
-| P2-T01 | Differential-drive URDF/Xacro | TODO | model validation |
-| P2-T02 | gz_ros2_control integration | TODO | cmd -> motion |
-| P2-T03 | LiDAR/IMU/RGB sensors | TODO | topic/rate tests |
-| P2-T04 | Plant world and semantic asset registry | TODO | 5–8 assets |
-| P2-T05 | Candidate viewpoint visualisation | TODO | RViz markers |
+| P2-T01 | Differential-drive URDF/Xacro | ACCEPTED | verified PASS, audited PASS |
+| P2-T02 | gz_ros2_control integration | ACCEPTED | verified PASS, audited PASS |
+| P2-T03 | LiDAR/IMU/RGB sensors | ACCEPTED | verified PASS, audited PASS |
+| P2-T04 | Plant world and semantic asset registry | ACCEPTED | verified PASS, audited PASS |
+| P2-T05 | Candidate viewpoint visualisation | ACCEPTED | verified PASS, audited PASS |
 | P3-T01 | Wheel odom + IMU EKF | TODO | filtered odom |
 | P3-T02 | SLAM Toolbox mapping | TODO | saved map |
 | P3-T03 | Saved-map localisation | TODO | repeatable startup |

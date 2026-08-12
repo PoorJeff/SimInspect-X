@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.8)
+﻿cmake_minimum_required(VERSION 3.8)
 project(siminspect_interfaces)
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
@@ -19,6 +19,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/CandidateViewpointArray.msg"
   "msg/MissionState.msg"
   "action/PrecisionApproach.action"
+  "srv/GetAssets.srv"
   DEPENDENCIES geometry_msgs builtin_interfaces std_msgs
 )
 
