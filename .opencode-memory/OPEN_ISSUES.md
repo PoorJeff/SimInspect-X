@@ -2,6 +2,17 @@
 
 Unresolved issues and blockers only. Resolved items are kept with a strike-through note.
 
+**Status:** implementation complete; runtime validation in progress
+
+## OI-012 — Gate A Docker baseline is blocked
+- Severity: HIGH (runtime validation blocker)
+- Captured 2026-08-13: `docker build --pull --progress=plain -f docker/Dockerfile
+  -t siminspect-x:baseline .` exited 1 because Docker Desktop Linux daemon was
+  unavailable at `npipe:////./pipe/dockerDesktopLinuxEngine`.
+- Evidence: `artifacts/validation/gate-a-baseline/docker-build.log`; the dependent
+  `docker run`/`colcon build` was not executed and its reason is preserved in
+  `artifacts/validation/gate-a-baseline/colcon-build.log`. Gate A remains blocked.
+
 ## RESOLVED — OI-001 git push blocked (network)
 - RESOLVED 2026-08-13: VPN active, push succeeded. Remote main = dc8cb7b.
 

@@ -1,7 +1,7 @@
 # PROJECT_STATE
 
-Status: PROJECT_COMPLETE
-Current phase: PROJECT_COMPLETE
+**Status:** implementation complete; runtime validation in progress
+Current phase: FINAL_PROJECT_GATE
 
 ## Project identity
 Name: SimInspect-X
@@ -26,7 +26,8 @@ FINAL_PROJECT_GATE
 - All 46 ACTIVE tasks ACCEPTED (P0-P10 complete).
 - 3 DEFERRED: S-T01 anomaly detection, S-T02 LLM mission parser,
   S-T03 multi-robot inspection.
-- Awaiting final project-level gate review before PROJECT_COMPLETE.
+- Gate A runtime validation is blocked by the captured Docker baseline failure:
+  `artifacts/validation/gate-a-baseline/docker-build.log`.
 - Project completion = engineering deliverable complete (46/46);
   research results pending Ubuntu runtime (OI-003/OI-005), recorded
   honestly in REPORT/CV pack.
@@ -77,4 +78,4 @@ ROS 2, Gazebo, Nav2, SLAM Toolbox, robot_localization.
   claims `[pending - Ubuntu run]`; no results are fabricated.
 
 ## Next gate
-None (project complete; runtime evidence follow-up only).
+Gate A runtime validation after a reachable Ubuntu/Docker environment is available.
