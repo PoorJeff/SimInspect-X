@@ -145,11 +145,11 @@ fi
 # ------------------ host mode ------------------
 if [ "${1:-}" = "--build" ]; then
     echo "[host] building image $IMAGE_NAME ..."
-    docker build -t "$IMAGE_NAME" docker/
+    docker build -f docker/Dockerfile -t "$IMAGE_NAME" .
 else
     if ! docker image inspect "$IMAGE_NAME" > /dev/null 2>&1; then
         echo "[host] image $IMAGE_NAME not found; building ..."
-        docker build -t "$IMAGE_NAME" docker/
+        docker build -f docker/Dockerfile -t "$IMAGE_NAME" .
     fi
 fi
 
