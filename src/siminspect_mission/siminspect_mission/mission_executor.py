@@ -15,6 +15,7 @@ import time
 import rclpy
 from rclpy.node import Node
 from rclpy.action import ActionClient
+from action_msgs.msg import GoalStatus
 from nav2_msgs.action import NavigateToPose
 from geometry_msgs.msg import PoseStamped
 from nav_msgs.msg import Odometry
@@ -91,6 +92,16 @@ def handle_nav_fail(sm):
     """
     _, new = sm.on_event(E_NAV_FAIL)
     return new == S_NAVIGATE
+
+
+def is_nav_success(status):
+    """Map a Nav2 action goal status to mission outcome (OI-010).
+
+    navigate_to_pose returns an empty result (std_msgs/Empty), so
+    success is decided by the action goal status, not by a result
+    field (the previous result-field access raised AttributeError).
+    """
+    return status == GoalStatus.STATUS_SUCCEEDED
 
 
 class MissionStateMachine:
@@ -398,9 +409,13 @@ class MissionExecutor(Node):
             self.asset_nav_time += time.time() - self._nav_start_ts
             self._nav_start_ts = None
         result_future = goal_handle.get_result_async()
-        result_future.add_done_callback(
-            lambda f: self.sm.on_event(E_NAV_OK) if f.result().error_code == 0 else self._on_nav_fail()
-        )
+        result_future.add_done_callback(self._nav_result_cb)
+
+    def _nav_result_cb(self, future):
+        if is_nav_success(future.result().status):
+            self.sm.on_event(E_NAV_OK)
+        else:
+            self._on_nav_fail()
 
     def _home_done_cb(self, future):
         goal_handle = future.result()

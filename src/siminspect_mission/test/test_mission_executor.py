@@ -4,6 +4,7 @@ from unittest.mock import MagicMock
 
 # Mock ROS stack before importing mission_executor (Windows: no rclpy)
 for mod in ["rclpy", "rclpy.node", "rclpy.action",
+            "action_msgs", "action_msgs.msg",
             "nav2_msgs", "nav2_msgs.action",
             "geometry_msgs", "geometry_msgs.msg",
             "nav_msgs", "nav_msgs.msg",
@@ -13,6 +14,7 @@ for mod in ["rclpy", "rclpy.node", "rclpy.action",
     sys.modules[mod] = MagicMock()
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "siminspect_mission"))
+import mission_executor  # noqa: E402  (module ref for GoalStatus patch)
 from mission_executor import (
     MissionStateMachine,
     S_IDLE, S_LOAD_MISSION, S_SELECT_ASSET, S_SELECT_VIEWPOINT, S_NAVIGATE,
@@ -23,7 +25,7 @@ from mission_executor import (
     E_READING_INVALID, E_RECORDED, E_HOME_REACHED, E_REPORT_EXPORTED,
     E_RETRY_VIEWPOINT, E_TICK,
     MAX_NAV_RETRIES, MAX_VIEWPOINT_ATTEMPTS, MAX_READER_RETRIES,
-    handle_nav_fail,
+    handle_nav_fail, is_nav_success,
 )
 
 class FakeAsset:
@@ -269,3 +271,12 @@ def test_reader_exhaustion_consumes_viewpoint_attempts():
     assert sm.state == S_RECORD
     assert sm.viewpoint_attempts == MAX_VIEWPOINT_ATTEMPTS
     assert sm.last_failure_reason == "low_confidence"
+
+
+def test_is_nav_success_mapping():
+    """OI-010: nav success is decided by action goal status, not result fields."""
+    mission_executor.GoalStatus.STATUS_SUCCEEDED = 4  # action_msgs/msg/GoalStatus
+    assert is_nav_success(4) is True    # STATUS_SUCCEEDED
+    assert is_nav_success(0) is False   # STATUS_UNKNOWN
+    assert is_nav_success(5) is False   # STATUS_CANCELED
+    assert is_nav_success(6) is False   # STATUS_ABORTED

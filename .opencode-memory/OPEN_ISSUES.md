@@ -61,14 +61,12 @@ Unresolved issues and blockers only. Resolved items are kept with a strike-throu
   markers). docs/06 permission table subscriber column corrected from
   siminspect_mission to siminspect_viewpoint_planner.
 
-## OI-010 — _nav_done_cb reads error_code on NavigateToPose result
-- Severity: MEDIUM (latent runtime bug; fix before Ubuntu runtime run)
-- The result lambda does `f.result().error_code`, but
-  nav2_msgs/action/NavigateToPose result is std_msgs/Empty (no such
-  field). At runtime this raises AttributeError in the callback, so
-  E_NAV_OK/E_NAV_FAIL never fires. Correct check: goal status via
-  ClientGoalHandle.status == GoalStatus.STATUS_SUCCEEDED.
-- Source: audit P8-T03 finding F3 (pre-existing, out of T03 scope)
+## RESOLVED — OI-010 _nav_done_cb reads error_code on NavigateToPose result
+- RESOLVED 2026-08-13: pure function is_nav_success(status) compares against
+  GoalStatus.STATUS_SUCCEEDED; _nav_result_cb routes E_NAV_OK on success else
+  _on_nav_fail() (T03 funnel preserved). Verified PASS (35/35 tests incl.
+  test_is_nav_success_mapping). Live Nav2 status semantics still need an
+  Ubuntu run (OI-003/OI-005). Source: audit P8-T03 finding F3.
 
 ## OI-011 — docs/06 permission table remaining drift
 - Severity: LOW (P10 documentation cleanup)
