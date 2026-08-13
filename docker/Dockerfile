@@ -22,6 +22,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     gnupg \
     lsb-release \
+    sudo \
     && add-apt-repository universe \
     && curl -sSL https://raw.githubusercontent.com/ros/rosdistro/master/ros.key -o /usr/share/keyrings/ros-archive-keyring.gpg \
     && echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/ros-archive-keyring.gpg] http://packages.ros.org/ros2/ubuntu $(lsb_release -cs) main" \
@@ -62,6 +63,8 @@ RUN curl -sSL https://packages.osrfoundation.org/gazebo.gpg -o /usr/share/keyrin
     && rm -rf /var/lib/apt/lists/*
 
 # Create non-root user
+RUN rosdep init
+
 RUN useradd -m -s /bin/bash siminspect \
     && echo "siminspect ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
 

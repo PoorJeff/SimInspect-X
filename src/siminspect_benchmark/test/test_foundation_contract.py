@@ -22,3 +22,10 @@ def test_all_docker_builds_use_root_context():
         assert build.split()[-1] == "."
     assert "context: ." in workflow
     assert "file: docker/Dockerfile" in workflow
+
+
+def test_dockerfile_initializes_required_runtime_tools():
+    text = (ROOT / "docker/Dockerfile").read_text(encoding="utf-8")
+    assert re.search(r"\bsudo\b", text)
+    assert "rosdep init" in text
+    assert "USER siminspect" in text

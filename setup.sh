@@ -23,7 +23,7 @@ fi
 # Install system dependencies via rosdep
 echo "[1/2] Installing dependencies (rosdep)..."
 if [ ! -f /etc/ros/rosdep/sources.list.d/20-default.list ]; then
-    sudo rosdep init
+    sudo -n rosdep init
 fi
 rosdep update
 rosdep install --from-paths src --ignore-src -y --rosdistro jazzy
