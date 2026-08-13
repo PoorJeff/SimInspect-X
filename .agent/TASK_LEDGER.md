@@ -47,7 +47,7 @@ Status values: TODO / IN_PROGRESS / READY_FOR_REVIEW / ACCEPTED / BLOCKED / DEFE
 | P9-T03 | ablations | ACCEPTED | verified PASS, audited PASS |
 | P9-T04 | consolidated analysis | ACCEPTED | verified PASS, audited PASS |
 | P10-T01 | one-command demo | ACCEPTED | verified PASS, audited PASS |
-| P10-T02 | research-style report | TODO | completed report |
+| P10-T02 | research-style report | ACCEPTED | verified PASS, audited PASS |
 | P10-T03 | README + architecture + demo video | TODO | reviewer-ready |
 | P10-T04 | CV/SOP evidence pack | TODO | measured claims only |
 | S-T01 | anomaly detection extension | DEFERRED | optional |
