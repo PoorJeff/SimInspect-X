@@ -49,7 +49,7 @@ Status values: TODO / IN_PROGRESS / READY_FOR_REVIEW / ACCEPTED / BLOCKED / DEFE
 | P10-T01 | one-command demo | ACCEPTED | verified PASS, audited PASS |
 | P10-T02 | research-style report | ACCEPTED | verified PASS, audited PASS |
 | P10-T03 | README + architecture + demo video | ACCEPTED | verified PASS, audited PASS |
-| P10-T04 | CV/SOP evidence pack | TODO | measured claims only |
+| P10-T04 | CV/SOP evidence pack | ACCEPTED | verified PASS, audited PASS |
 | S-T01 | anomaly detection extension | DEFERRED | optional |
 | S-T02 | LLM mission parser | DEFERRED | optional |
 | S-T03 | multi-robot inspection | DEFERRED | optional |

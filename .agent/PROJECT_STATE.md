@@ -10,7 +10,7 @@ Public title:
 
 ## Completed phases
 - P0: Research freeze (5/5 ACCEPTED)
-- P1: Docker/ROS/CI (5/5 ACCEPTED)
+- P1: Docker/ROS/CI (3/3 ACCEPTED)
 - P2: URDF/Gazebo/sensors/plant world (5/5 ACCEPTED)
 - P3: EKF/SLAM/localisation eval (4/4 ACCEPTED)
 - P4: Nav2 baseline/MPPI/recovery/benchmark (4/4 ACCEPTED)
@@ -25,7 +25,7 @@ P10: Admissions packaging
 - P10-T01: One-command demo (ACCEPTED)
 - P10-T02: Research-style report (ACCEPTED)
 - P10-T03: README + architecture + demo video (ACCEPTED)
-- P10-T04: CV/SOP evidence pack (TODO)
+- P10-T04: CV/SOP evidence pack (ACCEPTED)
 
 ## Gold Core
 - differential-drive AMR in Gazebo;
