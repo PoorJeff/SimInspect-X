@@ -21,7 +21,7 @@ Public title:
 
 ## Current phase
 P9: Robustness and repeatable experiments
-- P9-T01: Fault injector (TODO)
+- P9-T01: Fault injector (ACCEPTED)
 - P9-T02: Experiment runner (TODO)
 - P9-T03: Ablations (TODO)
 - P9-T04: Consolidated analysis (TODO)

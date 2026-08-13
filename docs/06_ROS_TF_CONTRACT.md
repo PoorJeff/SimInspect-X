@@ -119,10 +119,14 @@ is governed by the Mission Executive state machine (`NAVIGATE → PRECISION_APPR
 | `/inspection/retry_viewpoint` | `siminspect_precision_control` | `siminspect_mission` |
 | `/inspection/gauge_reading` | `siminspect_gauge_vision` | `siminspect_mission`, `siminspect_benchmark` |
 | `/inspection/mission_state` | `siminspect_mission` | `siminspect_benchmark` |
+| `/benchmark/fault_state` | `siminspect_benchmark` | `siminspect_benchmark` (monitor) |
 | `PrecisionApproach` (action) | `siminspect_precision_control` (server) | `siminspect_mission` (client) |
 
 - `siminspect_benchmark` subscribes to `/inspection/gauge_reading` and `/inspection/mission_state`
   for post-mission evaluation only; it **never** writes to any production topic.
+- `siminspect_benchmark` publishes `/benchmark/fault_state` (fault-injection status,
+  P9-T01) inside the benchmark namespace; this is instrumentation, not a
+  production topic.
 - `siminspect_sim` represents the Gazebo simulation bridge (`gz_ros2_control`); its topics
   correspond to simulator-provided sensor and actuator data.
 

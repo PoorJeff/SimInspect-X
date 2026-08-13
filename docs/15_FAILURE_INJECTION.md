@@ -21,3 +21,9 @@ Each scenario:
 - changes one primary factor unless it is explicitly a mixed-stress test.
 
 Do not tune on final test seeds.
+
+Config: `siminspect_benchmark/config/fault_scenarios.yaml` is the single
+source of truth for scenario parameters (intensity, duration, default
+seeds). The injector node logs scenario + seed and publishes fault state
+at startup; per-trial file recording is handled by the experiment runner
+(P9-T02, docs/16).

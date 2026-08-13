@@ -1,0 +1,112 @@
+# Fault injection scenarios (docs/15): F00-F11.
+# Deterministic config: exact parameters, no randomness in this file.
+# Default seeds use the DEVELOPMENT holdout pool (0021-0030) per docs/12;
+# the experiment runner (P9-T02) overrides with the final pool (0001-0020).
+# duration_s: 0 means the fault lasts for the whole mission run.
+scenarios:
+  - id: "F00"
+    name: nominal
+    primary_factor: none
+    seed: 21
+    params: {}
+
+  - id: "F01"
+    name: wheel_odom_noise
+    primary_factor: wheel_odom_noise
+    seed: 22
+    params:
+      duration_s: 60.0
+      linear_std: 0.02        # m/s gaussian noise on odom linear speed
+      angular_std: 0.01       # rad/s gaussian noise on odom angular speed
+
+  - id: "F02"
+    name: wheel_slip
+    primary_factor: wheel_slip
+    seed: 23
+    params:
+      duration_s: 60.0
+      slip_factor: 0.85       # effective wheel velocity fraction
+
+  - id: "F03"
+    name: imu_noise
+    primary_factor: imu_noise
+    seed: 24
+    params:
+      duration_s: 60.0
+      accel_std: 0.05         # m/s^2
+      gyro_std: 0.005         # rad/s
+
+  - id: "F04"
+    name: lidar_dropout_window
+    primary_factor: lidar_dropout_window
+    seed: 25
+    params:
+      duration_s: 60.0
+      window_s: 1.0           # dropout length per cycle
+      period_s: 5.0           # cycle period
+
+  - id: "F05"
+    name: dynamic_obstacle
+    primary_factor: dynamic_obstacle
+    seed: 26
+    params:
+      duration_s: 90.0
+      model: "dynamic_box"
+      speed: 0.3              # m/s
+      waypoints: [[1.0, 1.0], [3.0, 1.0], [3.0, 3.0], [1.0, 3.0]]
+
+  - id: "F06"
+    name: blocked_fixed_viewpoint
+    primary_factor: blocked_fixed_viewpoint
+    seed: 27
+    params:
+      duration_s: 0           # whole mission
+      asset_id: "gauge_pump_01"
+      occluder: "blocking_box"
+      occluder_pose: {x: 4.0, y: 1.0, yaw: 0.0}
+
+  - id: "F07"
+    name: camera_blur
+    primary_factor: camera_blur
+    seed: 28
+    params:
+      duration_s: 60.0
+      blur_sigma: 3.0
+
+  - id: "F08"
+    name: camera_dark
+    primary_factor: camera_dark
+    seed: 29
+    params:
+      duration_s: 60.0
+      brightness_factor: 0.4
+
+  - id: "F09"
+    name: gauge_partial_occlusion
+    primary_factor: gauge_partial_occlusion
+    seed: 30
+    params:
+      duration_s: 60.0
+      asset_id: "gauge_pump_01"
+      coverage: 0.3           # fraction of gauge face hidden
+      side: "left"
+
+  - id: "F10"
+    name: initial_pose_offset
+    primary_factor: initial_pose_offset
+    seed: 21
+    params:
+      duration_s: 0           # applied at spawn, whole run
+      dx: 0.3
+      dy: 0.2
+      dyaw: 0.15              # rad
+
+  - id: "F11"
+    name: mixed_stress
+    primary_factor: mixed
+    seed: 22
+    params:
+      duration_s: 90.0
+      slip_factor: 0.9
+      imu_accel_std: 0.03
+      brightness_factor: 0.6
