@@ -24,7 +24,7 @@ Public title:
 P10: Admissions packaging
 - P10-T01: One-command demo (ACCEPTED)
 - P10-T02: Research-style report (ACCEPTED)
-- P10-T03: README + architecture + demo video (TODO)
+- P10-T03: README + architecture + demo video (ACCEPTED)
 - P10-T04: CV/SOP evidence pack (TODO)
 
 ## Gold Core

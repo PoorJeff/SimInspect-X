@@ -1,4 +1,5 @@
 # SimInspect-X
+
 ## Perception-Aware Autonomous Industrial Inspection in a Simulation-First Plant Testbed
 
 **One-sentence project claim**
@@ -16,6 +17,33 @@ infrastructure; the project's original engineering and research contribution is 
 3. **precision approach control: PID vs MPC**;
 4. **mission-level recovery and experiment methodology**.
 
+## What this project is (five-minute version)
+
+SimInspect-X is a closed, measurable chain: a simulated industrial plant with analog gauges, and a robot that must
+navigate to each asset -> choose **where to stand** (candidate viewpoints scored by visibility, distance, incidence
+angle, clearance and travel cost) -> align precisely (PID or constrained MPC) -> read the gauge -> judge its own
+confidence -> re-inspect from another viewpoint when the reading is uncertain -> record the result -> return home
+and export a structured report.
+
+The flagship comparison is **fixed waypoint vs perception-aware viewpoint policy** (B0 vs P1/P2): does scoring
+candidate viewpoints actually raise the proportion of valid readings, at what travel cost? The secondary comparison
+is **PID vs MPC** for the final precision approach. Robustness is measured under twelve seeded fault scenarios
+(F00-F11) with paired trials and ablations (A1-A6).
+
+Honest status: the full stack is designed, implemented, unit-tested and packaged behind a one-command headless
+demo; **runtime evaluation on the Ubuntu/Gazebo target is pending** (Windows development host has no ROS runtime).
+The research report (`docs/report/REPORT.md`) therefore contains placeholder tables and no fabricated numbers.
+
+## System architecture
+
+![architecture](docs/report/architecture.png)
+
+Eight layers: Gazebo sensors -> EKF/SLAM state estimation -> Nav2 navigation -> viewpoint planning -> precision
+control (PID/MPC) -> gauge vision -> mission execution -> benchmark/firewall. Ground-truth topics live under
+`/benchmark_ground_truth/` and are firewalled from production autonomy (dual-layer CI enforcement).
+
+Full details: `docs/report/REPORT.md` (research report) and `docs/03_SYSTEM_ARCHITECTURE.md`.
+
 ## Quick Start
 
 One-command demo (headless, Docker):
@@ -24,18 +52,44 @@ One-command demo (headless, Docker):
 ./run_demo.sh
 ```
 
-This builds the Docker image if needed, launches the full inspection chain
-headlessly (Gazebo plant world -> EKF -> SLAM -> Nav2 -> precision approach ->
-viewpoint planner -> gauge vision -> mission executor -> fault injector F00),
-waits for a >=5-asset mission, and exports `mission_report.json` plus a result
-summary to stdout.
+`run_demo.sh` builds the Docker image if needed and launches the 11 components of the inspection chain headlessly
+(Gazebo plant world + robot, EKF, SLAM, Nav2, precision approach, candidate generator, P2 selector, gauge vision
+node, asset registry, fault injector F00, mission executor), waits for a >=5-asset mission, then exports
+`mission_report.json` plus a result summary to stdout.
 
-- Prerequisites: Docker. Fixed seed (dev pool 21) and `config/demo_config.yaml`
-  make the run reproducible.
-- Expected output: `mission_report.json` (schema v1.0) with per-asset
-  status/confidence/failure reason.
-- Honest note: runtime validation requires the Ubuntu 24.04 container (ROS 2
-  Jazzy + Gazebo Harmonic); Windows is static-verification only.
+- Prerequisites: Docker. Fixed seed (dev pool 21) and `config/demo_config.yaml` make runs reproducible.
+- Expected output: `mission_report.json` (schema v1.0) with per-asset status/confidence/failure reason.
+- Honest note: runtime validation requires the Ubuntu 24.04 container (ROS 2 Jazzy + Gazebo Harmonic); the
+  Windows development host is static-verification only.
+
+### Docker details
+
+`run_demo.sh` builds `docker/Dockerfile` (Ubuntu 24.04 + ROS 2 Jazzy + Gazebo Harmonic) automatically; force a
+rebuild with `./run_demo.sh --build`. For manual container use:
+
+```bash
+docker build -t siminspect-x -f docker/Dockerfile .
+docker run -it --rm -v $(pwd):/home/siminspect/workspace siminspect-x
+```
+
+### Native Ubuntu 24.04
+
+```bash
+./setup.sh                 # rosdep + colcon build
+source install/setup.bash
+./run_demo.sh --in-docker  # or launch components directly (inside the container only)
+```
+
+### Headless operation
+
+All simulation, tests and benchmarks run without GPU or display: Gazebo runs headless (`gz sim -s -r`), no X11
+forwarding is required.
+
+### Verify
+
+```bash
+colcon test && colcon test-result
+```
 
 ## Why this version is stronger than a generic inspection robot
 
@@ -49,13 +103,13 @@ SimInspect-X asks a harder and more inspection-specific question:
 
 ```text
 Which viewpoint should I inspect from?
-        ↓
+        |
 Can I reach it safely?
-        ↓
+        |
 Can I align precisely enough?
-        ↓
+        |
 Is the target actually readable?
-        ↓
+        |
 If not, where should I move next?
 ```
 
@@ -86,60 +140,27 @@ The final demonstration should show:
 9. survives at least one blocked-route or degraded-visibility event;
 10. returns home and exports a structured inspection report.
 
-## Quick Start
+The recording blueprint for this demo is `docs/report/demo_video_script.md`.
 
-### Option A: Docker (recommended)
+## Directory structure
 
-```bash
-# Clone
-git clone https://github.com/PoorJeff/SimInspect-X.git
-cd SimInspect-X
-
-# Build image (Ubuntu 24.04 + ROS 2 Jazzy + Gazebo Harmonic)
-docker build -t siminspect-x -f docker/Dockerfile .
-
-# Run container (headless)
-docker run -it --rm \
-    -v $(pwd):/home/siminspect/ws \
-    -e DISPLAY= \
-    siminspect-x
-
-# Inside container
-cd ~/ws
-./setup.sh
-source install/setup.bash
-colcon test && colcon test-result
-```
-
-### Option B: Native Ubuntu 24.04
-
-```bash
-# Install ROS 2 Jazzy (desktop)
-# See: https://docs.ros.org/en/jazzy/Installation/Ubuntu-Install-Debs.html
-
-# Install Gazebo Harmonic
-# See: https://gazebosim.org/docs/harmonic/install_ubuntu
-
-# Clone and build
-git clone https://github.com/PoorJeff/SimInspect-X.git
-cd SimInspect-X
-./setup.sh
-source install/setup.bash
-```
-
-### Headless operation
-
-All simulation, tests, and benchmarks run without GPU or display:
-- Gazebo runs in headless mode (`gz sim -s -r` or `HEADLESS=1`)
-- No X11 forwarding required
-- Docker container uses `-e DISPLAY=` to disable GUI
-
-### Verify
-
-```bash
-colcon build --symlink-install         # clean build
-colcon test                            # run all tests
-colcon test-result --all               # check results (exit code 0 = all pass)
+```text
+src/siminspect_description/       robot model, Gazebo world, spawn launch
+src/siminspect_localization/      EKF + SLAM/localisation
+src/siminspect_navigation/        Nav2 (Navfn + MPPI), recovery
+src/siminspect_viewpoint_planner/ candidate generation, quality scoring,
+                                  B0/B1/P1/P2 selectors
+src/siminspect_precision_control/ handoff manager, PID, constrained linear MPC
+src/siminspect_gauge_vision/      detection, reading, confidence proxy, ROS node
+src/siminspect_mission/           mission state machine, report schema, ordering
+src/siminspect_benchmark/         fault injection, experiment runner, ablations,
+                                  consolidated analysis
+src/siminspect_interfaces/        ROS messages and actions
+src/siminspect_assets/            asset YAML registry
+src/siminspect_sim/               plant world files
+docs/                             contract documents + research report
+planning/                         master plan and phase specs
+config/                           demo configuration
 ```
 
 ## Locked baseline stack
@@ -151,16 +172,24 @@ colcon test-result --all               # check results (exit code 0 = all pass)
 - ros2_control / gz_ros2_control
 - robot_localization
 - SLAM Toolbox
-- Nav2
-- MPPI for production local navigation
-- custom `inspection_planner`
-- custom `precision_control`
-- custom `gauge_reader`
+- Nav2 (Navfn global planner + MPPI local controller)
+- siminspect_viewpoint_planner
+- siminspect_precision_control
+- siminspect_gauge_vision
 - Python + C++ where appropriate
 
 See:
 - `docs/01_PROJECT_THESIS.md`
 - `docs/02_ADMISSIONS_ALIGNMENT.md`
 - `docs/04_ORIGINALITY_BOUNDARY.md`
+- `docs/report/REPORT.md`
 - `planning/MASTER_PLAN.md`
 - `.agent/`
+
+## Contributors
+
+- Zihao Jiang ([PoorJeff](https://github.com/PoorJeff)) — author and maintainer.
+
+## Licence
+
+MIT (see package manifests under `src/`).
