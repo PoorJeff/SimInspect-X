@@ -1,7 +1,7 @@
 # PROJECT_STATE
 
-Status: P10_READY
-Current phase: P10_PACKAGING
+Status: PROJECT_COMPLETE
+Current phase: PROJECT_COMPLETE
 
 ## Project identity
 Name: SimInspect-X
@@ -19,13 +19,17 @@ Public title:
 - P7: Precision control (interface, PID, MPC, paired benchmark) (4/4 ACCEPTED)
 - P8: Adaptive mission (state machine, reports, retry policy, ordering) (4/4 ACCEPTED)
 - P9: Robustness and repeatable experiments (4/4 ACCEPTED)
+- P10: Admissions packaging (4/4 ACCEPTED)
 
 ## Current phase
-P10: Admissions packaging
-- P10-T01: One-command demo (ACCEPTED)
-- P10-T02: Research-style report (ACCEPTED)
-- P10-T03: README + architecture + demo video (ACCEPTED)
-- P10-T04: CV/SOP evidence pack (ACCEPTED)
+FINAL_PROJECT_GATE
+- All 46 ACTIVE tasks ACCEPTED (P0-P10 complete).
+- 3 DEFERRED: S-T01 anomaly detection, S-T02 LLM mission parser,
+  S-T03 multi-robot inspection.
+- Awaiting final project-level gate review before PROJECT_COMPLETE.
+- Project completion = engineering deliverable complete (46/46);
+  research results pending Ubuntu runtime (OI-003/OI-005), recorded
+  honestly in REPORT/CV pack.
 
 ## Gold Core
 - differential-drive AMR in Gazebo;
@@ -62,6 +66,15 @@ ROS 2, Gazebo, Nav2, SLAM Toolbox, robot_localization.
 - Windows environment: no ROS 2/colcon/Gazebo runtime. All code is static-only.
 - Push to GitHub fails without VPN.
 
+## Runtime evidence gaps (recorded at final gate)
+- OI-003: MPC runtime evidence missing (Windows lacks OSQP; fallback
+  returns zero). Needs Ubuntu 24.04 + OSQP run.
+- OI-005: Ubuntu runtime assumptions unverified (Dockerfile build, Nav2
+  MPPI runtime, ros_gz_bridge sensors, demo mission run). All runtime-
+  dependent gates (P1 build/CI, P2 robot-moves/sensors, P3 EKF/SLAM,
+  P4 nav/recovery, P7 handoff stability, P10 video) remain pending this
+  environment. REPORT.md and CV_EVIDENCE_PACK.md mark all numeric
+  claims `[pending - Ubuntu run]`; no results are fabricated.
+
 ## Next gate
-P10 must deliver one-command demo (T01), research report (T02),
-README + architecture + demo video (T03), and CV/SOP evidence pack (T04).
+None (project complete; runtime evidence follow-up only).

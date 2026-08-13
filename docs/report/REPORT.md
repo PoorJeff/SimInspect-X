@@ -219,3 +219,6 @@ success/recovery, end-to-end mission success per fault — pending.
 When the Ubuntu runs complete, Sections 5-6 of this report are filled from
 `experiments/raw/`, and the claim boundary is revised upward only with
 regenerated evidence.
+
+Project state: engineering deliverable complete (46/46 tasks accepted);
+see `.agent/PROJECT_STATE.md` (Runtime evidence gaps).
