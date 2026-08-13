@@ -43,7 +43,7 @@ Status values: TODO / IN_PROGRESS / READY_FOR_REVIEW / ACCEPTED / BLOCKED / DEFE
 | P8-T03 | route/asset retry policy | ACCEPTED | verified PASS, audited PASS |
 | P8-T04 | optional mission ordering heuristic | ACCEPTED | verified PASS, audited PASS |
 | P9-T01 | fault injector | ACCEPTED | verified PASS, audited PASS |
-| P9-T02 | experiment runner | TODO | seed sweep |
+| P9-T02 | experiment runner | READY_FOR_REVIEW | runner + sweep + E1-E6 matrix + tests |
 | P9-T03 | ablations | TODO | reproducible tables |
 | P9-T04 | consolidated analysis | TODO | auto-generated plots |
 | P10-T01 | one-command demo | TODO | clean run |

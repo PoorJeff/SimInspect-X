@@ -1,0 +1,64 @@
+# Experiment matrix (docs/12): E1-E6 with methods, fault scenarios, seed pools.
+# Seed pools: final = 0001-0020, dev = 0021-0030 (docs/12 seed strategy).
+# harness fields document what the runner would execute; the authoritative
+# mapping lives in experiment_core.HARNESS_MAP (validated against this file).
+# harness: null means no standalone harness exists yet (honest mapping).
+experiments:
+  - id: E1
+    name: state_estimation
+    world: plant.sdf
+    methods: [raw_odom, ekf]
+    scenarios: [F00, F01, F02, F03]
+    seeds: {pool: dev, count: 5}
+    harness: localisation_eval.py
+
+  - id: E2
+    name: navigation
+    world: plant.sdf
+    methods: [nav2]
+    scenarios: [F00, F04, F05]
+    # narrow-aisle / blocked-route variants are harness-internal world
+    # conditions (nav_benchmark_scenarios.yaml), not fault scenarios.
+    seeds: {pool: dev, count: 5}
+    harness: nav_benchmark.py
+
+  - id: E3
+    name: gauge_reader
+    world: plant.sdf
+    methods: [deterministic_reader]
+    scenarios: [F00, F07, F08, F09]
+    seeds: {pool: dev, count: 5}
+    # No standalone harness yet (deferred to P9-T03/T04).
+    harness: null
+
+  - id: E4
+    name: viewpoint_policy
+    world: plant.sdf
+    methods: [B0, B1, P1, P2]
+    scenarios: [F00, F06, F07, F10, F11]
+    seeds: {pool: final, count: 20}
+    harness: null          # per-method harnesses below
+    harnesses:
+      B0: run_b0_benchmark.py
+      B1: null             # nearest-candidate has no harness yet
+      P1: run_p1_benchmark.py
+      P2: run_p2_benchmark.py
+
+  - id: E5
+    name: precision_control
+    world: plant.sdf
+    methods: [PID, MPC]
+    scenarios: [F00, F02]
+    # E5's internal conditions (yaw error, noise, saturation) stay in
+    # precision_benchmark.yaml; the fault injector adds F02 wheel slip.
+    seeds: {pool: dev, count: 5}
+    harness: run_precision_benchmark.py
+
+  - id: E6
+    name: end_to_end
+    world: plant.sdf
+    methods: [mission]
+    scenarios: [F00, F05, F11]
+    seeds: {pool: dev, count: 5}
+    # No standalone mission harness yet (deferred).
+    harness: null
