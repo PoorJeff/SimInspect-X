@@ -36,6 +36,12 @@ except ImportError:
         build_result_record, build_mission_report,
     )
 
+# Asset ordering (P8-T04). Same dual-layout import pattern.
+try:
+    from siminspect_mission.mission_ordering import ORDERINGS, order_assets
+except ImportError:
+    from mission_ordering import ORDERINGS, order_assets
+
 
 # ---------------------------------------------------------------------------
 # Pure state machine (ROS-free, unit-testable)
@@ -231,6 +237,16 @@ class MissionExecutor(Node):
         super().__init__("mission_executor")
         self.sm = MissionStateMachine()
 
+        # P8-T04: asset ordering strategy (list = declaration order,
+        # greedy = nearest-neighbour). Default keeps existing behaviour.
+        self.declare_parameter("ordering", "list")
+        ordering = self.get_parameter("ordering").value
+        if ordering not in ORDERINGS:
+            self.get_logger().warn(
+                f"Unknown ordering '{ordering}'; falling back to 'list'")
+            ordering = "list"
+        self._ordering = ordering
+
         # Subscriptions
         self._assets_sub = self.create_subscription(
             AssetArray, "/inspection/assets", self._cb_assets, 10)
@@ -276,7 +292,10 @@ class MissionExecutor(Node):
 
     def _cb_assets(self, msg: AssetArray):
         self.get_logger().info(f"Received {len(msg.assets)} assets")
-        self.sm.load_assets(msg.assets)
+        start = ((self.current_odom[0], self.current_odom[1])
+                 if self.current_odom is not None else (0.0, 0.0))
+        assets = order_assets(list(msg.assets), start, self._ordering)
+        self.sm.load_assets(assets)
 
     def _cb_viewpoint(self, msg: PoseStamped):
         self.selected_viewpoint = msg

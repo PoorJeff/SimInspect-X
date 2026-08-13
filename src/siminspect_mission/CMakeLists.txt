@@ -20,6 +20,7 @@ if(BUILD_TESTING)
   find_package(ament_cmake_pytest REQUIRED)
   ament_add_pytest_test(test_mission_executor test/test_mission_executor.py)
   ament_add_pytest_test(test_report_writer test/test_report_writer.py)
+  ament_add_pytest_test(test_mission_ordering test/test_mission_ordering.py)
 endif()
 
 ament_package()

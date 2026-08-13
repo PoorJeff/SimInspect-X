@@ -1,7 +1,7 @@
 # PROJECT_STATE
 
-Status: P8_IN_PROGRESS
-Current phase: P8_ADAPTIVE_MISSION
+Status: P9_READY
+Current phase: P9_ROBUSTNESS
 
 ## Project identity
 Name: SimInspect-X
@@ -16,13 +16,15 @@ Public title:
 - P4: Nav2 baseline/MPPI/recovery/benchmark (4/4 ACCEPTED)
 - P5: Synthetic gauge dataset/detector/reader/confidence (4/4 ACCEPTED)
 - P6: Viewpoint planning (candidate gen, quality scorer, B0, P1, P2 selectors) (5/5 ACCEPTED)
+- P7: Precision control (interface, PID, MPC, paired benchmark) (4/4 ACCEPTED)
+- P8: Adaptive mission (state machine, reports, retry policy, ordering) (4/4 ACCEPTED)
 
 ## Current phase
-P8: Adaptive mission execution
-- P8-T01: Mission executive state machine (ACCEPTED)
-- P8-T02: Inspection result/report schema (ACCEPTED)
-- P8-T03: Route/asset retry policy (ACCEPTED)
-- P8-T04: Optional mission ordering heuristic (TODO)
+P9: Robustness and repeatable experiments
+- P9-T01: Fault injector (TODO)
+- P9-T02: Experiment runner (TODO)
+- P9-T03: Ablations (TODO)
+- P9-T04: Consolidated analysis (TODO)
 
 ## Gold Core
 - differential-drive AMR in Gazebo;
@@ -58,8 +60,7 @@ ROS 2, Gazebo, Nav2, SLAM Toolbox, robot_localization.
 ## Active constraints
 - Windows environment: no ROS 2/colcon/Gazebo runtime. All code is static-only.
 - Push to GitHub fails without VPN.
-- P3-P7 code largely uncommitted in working tree.
 
 ## Next gate
-P7 must deliver precision approach interface (T01), PID (T02), MPC (T03), and paired benchmark (T04).
-P8 will deliver mission executive, inspection reports, and retry policy.
+P9 must deliver fault injection (T01), experiment runner (T02), ablations (T03),
+and consolidated analysis (T04).

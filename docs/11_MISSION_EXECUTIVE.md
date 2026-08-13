@@ -28,6 +28,17 @@ Per asset:
 - viewpoint attempts: 3;
 - camera/reader retries per viewpoint: small fixed number.
 
+## Asset ordering
+
+The mission node declares a ROS parameter `ordering` (default `list`):
+
+- `list` — assets are visited in declaration order (the default,
+  preserving the original behaviour).
+- `greedy` — nearest-neighbour heuristic: from the current robot pose,
+  repeatedly visit the closest unvisited asset. The asset gauge pose is
+  used as a proxy for the visit point (viewpoints lie near the asset).
+  Deterministic (stable ties); not guaranteed globally optimal.
+
 ## Result record
 
 Top-level report (schema v1.0):
