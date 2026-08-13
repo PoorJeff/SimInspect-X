@@ -36,8 +36,11 @@ def main():
     with open(cfg) as f: data = yaml.safe_load(f)
     rclpy.init(); node = P1Benchmark(); results = []
     for cond in data["conditions"]:
-        goal = node.navigate(PoseStamped(), 120)  # placeholder; real goal from P1 selector
-        results.append({"id": cond["id"], "success": success, "duration_s": round(dt,2), "path_length_m": round(pl,3)})
+        goal = PoseStamped()  # placeholder; real goal from P1 selector
+        ok, dt, pl = node.navigate(goal, 120)
+        results.append({"id": cond["id"], "success": ok,
+                        "duration_s": round(dt, 2),
+                        "path_length_m": round(pl, 3)})
     print(json.dumps({"experiment": "P1", "results": results}, indent=2))
     node.destroy_node(); rclpy.shutdown()
 

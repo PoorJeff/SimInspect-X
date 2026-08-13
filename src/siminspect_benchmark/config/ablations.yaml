@@ -1,0 +1,69 @@
+# Ablation matrix (docs/14): A1-A6.
+# Each ablation changes exactly one factor of the proposed method.
+# weights follow quality_scorer.DEFAULT_W
+#   {w_vis:0.35, w_d:0.25, w_theta:0.25, w_s:0.15, w_t:0.15}.
+# Seed pools: final = 0001-0020, dev = 0021-0030 (docs/12).
+ablations:
+  - id: A1
+    name: remove_visibility_term
+    experiment: E4
+    baseline_method: P2
+    method: P2_A1
+    overrides:
+      weights: {w_vis: 0.0}
+    scenarios: [F06, F10]
+    seeds: {pool: final, count: 20}
+
+  - id: A2
+    name: remove_incidence_term
+    experiment: E4
+    baseline_method: P2
+    method: P2_A2
+    overrides:
+      weights: {w_theta: 0.0}
+    scenarios: [F06, F10]
+    seeds: {pool: final, count: 20}
+
+  - id: A3
+    name: remove_travel_term
+    experiment: E4
+    baseline_method: P2
+    method: P2_A3
+    overrides:
+      weights: {w_t: 0.0}
+    scenarios: [F06, F10]
+    seeds: {pool: final, count: 20}
+
+  - id: A4
+    name: disable_reinspection
+    experiment: E4
+    baseline_method: P2
+    method: P2_A4
+    overrides:
+      reinspect: false
+    scenarios: [F06, F07, F10, F11]
+    seeds: {pool: final, count: 20}
+
+  - id: A5
+    name: ekf_on_off_wheel_noise
+    experiment: E1
+    baseline_method: ekf
+    methods: [raw_odom, ekf]
+    overrides:
+      localization: off    # launch-level: disable robot_localization EKF node
+    scenarios: [F01]
+    seeds: {pool: dev, count: 5}
+    note: >
+      launch/config-level ablation; the runner emits the robot_localization
+      enable/disable instructions, actual toggling happens in the Ubuntu
+      launch environment (not executed on Windows).
+
+  - id: A6
+    name: pid_vs_mpc
+    experiment: E5
+    baseline_method: PID
+    methods: [PID, MPC]
+    scenarios: [F00]
+    seeds: {pool: dev, count: 5}
+    covered_by: E5
+    note: reference ablation; the PID-vs-MPC comparison is fully covered by E5.

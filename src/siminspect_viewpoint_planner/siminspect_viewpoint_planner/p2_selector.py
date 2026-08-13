@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 """P2 adaptive selector: P1 + confidence-triggered re-inspection. Max 3 attempts."""
+import json
 import math
+import os
 import rclpy
 from rclpy.node import Node
 from geometry_msgs.msg import PoseStamped
@@ -17,7 +19,22 @@ class P2Selector(Node):
         self.asset_sub = self.create_subscription(AssetArray, "/inspection/assets", self.on_assets, 10)
         self.reader_sub = self.create_subscription(GaugeReading, "/inspection/gauge_reading", self.on_reading, 10)
         self.p1 = P1Selector.__new__(P1Selector)
-        self.p1.scorer = __import__("quality_scorer").QualityScorer()
+        # P9-T03 ablation support: scorer weights + re-inspection toggle.
+        self.declare_parameter("weights_json", "")
+        self.declare_parameter("enable_reinspect", True)
+        weights = None
+        wj = self.get_parameter("weights_json").value
+        if not wj:
+            wj = os.environ.get("SIMINSPECT_WEIGHTS", "")
+        if wj:
+            weights = json.loads(wj)
+        self.p1.scorer = __import__("quality_scorer").QualityScorer(
+            weights=weights)
+        self.enable_reinspect = (
+            self.get_parameter("enable_reinspect").value)
+        if "SIMINSPECT_REINSPECT" in os.environ:
+            self.enable_reinspect = (
+                os.environ["SIMINSPECT_REINSPECT"].lower() == "true")
         self.assets = {}
         self.blacklist = []
         self.attempt = 0
@@ -37,6 +54,8 @@ class P2Selector(Node):
                 self.get_logger().info(f"P2 initial selection for {asset.id}: candidate {idx}")
 
     def on_reading(self, msg: GaugeReading):
+        if not self.enable_reinspect:
+            return  # A4: re-inspection disabled (P1-equivalent)
         if msg.confidence >= CONF_THRESHOLD:
             self.get_logger().info(f"P2 reading ok for {msg.asset_id}: conf={msg.confidence:.2f}")
             return

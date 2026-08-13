@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 """P1 perception-aware selector: max Q(v,a) among V>0 candidates."""
+import json
 import math
+import os
 import rclpy
 from rclpy.node import Node
 from geometry_msgs.msg import PoseStamped
@@ -12,7 +14,15 @@ class P1Selector(Node):
         super().__init__("p1_selector")
         self.pub = self.create_publisher(PoseStamped, "/inspection/selected_viewpoint", 10)
         self.sub = self.create_subscription(AssetArray, "/inspection/assets", self.on_assets, 10)
-        self.scorer = QualityScorer()
+        # P9-T03 ablation support: optional scorer weight override.
+        self.declare_parameter("weights_json", "")
+        weights = None
+        wj = self.get_parameter("weights_json").value
+        if not wj:
+            wj = os.environ.get("SIMINSPECT_WEIGHTS", "")
+        if wj:
+            weights = json.loads(wj)
+        self.scorer = QualityScorer(weights=weights)
 
     def on_assets(self, msg: AssetArray):
         for asset in msg.assets:

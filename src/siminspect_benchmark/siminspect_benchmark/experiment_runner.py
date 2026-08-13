@@ -27,15 +27,17 @@ except ImportError:
 
 
 def run_trial(exp, method, scenario, seed, root, commit=None,
-              dry_run=False, inject=True):
+              dry_run=False, inject=True, planner_params=None,
+              extra_env=None, harness_method=None):
     """Run one trial; returns (record, output_path)."""
     if not validate_seed(seed):
         raise ValueError(f"seed {seed} outside pools")
     if scenario not in exp["scenarios"]:
         raise ValueError(f"scenario {scenario} not in {exp['id']} matrix")
-    if method not in exp["methods"]:
-        raise ValueError(f"method {method} not in {exp['id']} matrix")
-    harness = harness_for(exp["id"], method)
+    base = harness_method or method
+    if base not in exp["methods"]:
+        raise ValueError(f"method {base} not in {exp['id']} matrix")
+    harness = harness_for(exp["id"], base)
     if harness is None:
         raise ValueError(
             f"no harness for {exp['id']}/{method} (honest mapping; "
@@ -48,7 +50,8 @@ def run_trial(exp, method, scenario, seed, root, commit=None,
         record = build_trial_record(
             exp, method, scenario, seed, commit,
             result="dry_run", failure_reason="",
-            metrics={"planned": True})
+            metrics={"planned": True},
+            planner_params=planner_params or {})
         print(f"[dry-run] {exp['id']}/{method}/{scenario}/seed={seed} "
               f"-> {out_path}")
         return record, out_path
@@ -64,6 +67,8 @@ def run_trial(exp, method, scenario, seed, root, commit=None,
 
     env = dict(os.environ)
     env["SIMINSPECT_SEED"] = str(seed)
+    if extra_env:
+        env.update(extra_env)
     # NOTE: harnesses read SIMINSPECT_SEED as the seed contract; scripts that
     # ignore it (e.g. E5's internal YAML seeds) are T03 integration debt.
     proc = subprocess.run(
@@ -79,7 +84,8 @@ def run_trial(exp, method, scenario, seed, root, commit=None,
         exp, method, scenario, seed, commit, result=result,
         failure_reason=failure_reason,
         metrics={"exit_code": proc.returncode, "elapsed_s": elapsed,
-                 "stdout_tail": proc.stdout.strip()[-500:]})
+                 "stdout_tail": proc.stdout.strip()[-500:]},
+        planner_params=planner_params or {})
     os.makedirs(os.path.dirname(out_path), exist_ok=True)
     with open(out_path, "w", encoding="utf-8") as f:
         json.dump(record, f, indent=2)

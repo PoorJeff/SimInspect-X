@@ -182,7 +182,10 @@ def main():
     dt = cfg["dt"]
     max_steps = cfg["max_steps"]
     methods = cfg["methods"]
-    seeds = args.seeds if args.seeds else cfg["seeds"]
+    if "SIMINSPECT_SEED" in os.environ:
+        seeds = [int(os.environ["SIMINSPECT_SEED"])]
+    else:
+        seeds = args.seeds if args.seeds else cfg["seeds"]
     conditions = cfg["conditions"]
     targets = cfg["targets"]
 

@@ -44,7 +44,7 @@ Status values: TODO / IN_PROGRESS / READY_FOR_REVIEW / ACCEPTED / BLOCKED / DEFE
 | P8-T04 | optional mission ordering heuristic | ACCEPTED | verified PASS, audited PASS |
 | P9-T01 | fault injector | ACCEPTED | verified PASS, audited PASS |
 | P9-T02 | experiment runner | ACCEPTED | verified PASS, audited PASS |
-| P9-T03 | ablations | TODO | reproducible tables |
+| P9-T03 | ablations | READY_FOR_REVIEW | A1-A6 config + runner + debt fixes + tests |
 | P9-T04 | consolidated analysis | TODO | auto-generated plots |
 | P10-T01 | one-command demo | TODO | clean run |
 | P10-T02 | research-style report | TODO | completed report |
