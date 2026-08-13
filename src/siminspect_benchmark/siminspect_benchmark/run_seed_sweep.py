@@ -9,7 +9,11 @@ import os
 import sys
 import time
 
-from experiment_core import SEED_POOLS, seeds_from_spec, load_matrix
+try:
+    from siminspect_benchmark.experiment_core import (
+        SEED_POOLS, seeds_from_spec, load_matrix)
+except ImportError:
+    from experiment_core import SEED_POOLS, seeds_from_spec, load_matrix
 from experiment_runner import run_trial
 
 
