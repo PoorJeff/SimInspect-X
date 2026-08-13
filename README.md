@@ -16,6 +16,27 @@ infrastructure; the project's original engineering and research contribution is 
 3. **precision approach control: PID vs MPC**;
 4. **mission-level recovery and experiment methodology**.
 
+## Quick Start
+
+One-command demo (headless, Docker):
+
+```bash
+./run_demo.sh
+```
+
+This builds the Docker image if needed, launches the full inspection chain
+headlessly (Gazebo plant world -> EKF -> SLAM -> Nav2 -> precision approach ->
+viewpoint planner -> gauge vision -> mission executor -> fault injector F00),
+waits for a >=5-asset mission, and exports `mission_report.json` plus a result
+summary to stdout.
+
+- Prerequisites: Docker. Fixed seed (dev pool 21) and `config/demo_config.yaml`
+  make the run reproducible.
+- Expected output: `mission_report.json` (schema v1.0) with per-asset
+  status/confidence/failure reason.
+- Honest note: runtime validation requires the Ubuntu 24.04 container (ROS 2
+  Jazzy + Gazebo Harmonic); Windows is static-verification only.
+
 ## Why this version is stronger than a generic inspection robot
 
 A generic system says:

@@ -1,0 +1,20 @@
+# One-command demo configuration (P10-T01).
+# Fixed seed => reproducible demo runs (docs/12 dev holdout pool 0021-0030).
+# The asset list mirrors the YAML files in src/siminspect_assets/assets/
+# (asset_registry loads the whole directory, currently 6 assets).
+world: "src/siminspect_sim/worlds/plant.sdf"
+headless: true
+robot_pose: {x: 0.0, y: 0.0, yaw: 0.0}
+ordering: list            # mission executor ordering param: list | greedy
+scenario: F00             # fault injector scenario (nominal)
+seed: 21                  # dev-pool seed, fixed for reproducibility
+controller: pid           # precision approach controller: pid | mpc
+timeout_s: 900            # demo mission completion timeout
+expected_min_assets: 5    # docs/11: mission covers >= 5 assets
+assets:
+  - gauge_pipe_01
+  - gauge_pipe_02
+  - gauge_pump_01
+  - gauge_tank_01
+  - gauge_tank_02
+  - gauge_valve_01

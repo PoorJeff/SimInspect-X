@@ -1,7 +1,7 @@
 # PROJECT_STATE
 
-Status: P9_READY
-Current phase: P9_ROBUSTNESS
+Status: P10_READY
+Current phase: P10_PACKAGING
 
 ## Project identity
 Name: SimInspect-X
@@ -18,13 +18,14 @@ Public title:
 - P6: Viewpoint planning (candidate gen, quality scorer, B0, P1, P2 selectors) (5/5 ACCEPTED)
 - P7: Precision control (interface, PID, MPC, paired benchmark) (4/4 ACCEPTED)
 - P8: Adaptive mission (state machine, reports, retry policy, ordering) (4/4 ACCEPTED)
+- P9: Robustness and repeatable experiments (4/4 ACCEPTED)
 
 ## Current phase
-P9: Robustness and repeatable experiments
-- P9-T01: Fault injector (ACCEPTED)
-- P9-T02: Experiment runner (ACCEPTED)
-- P9-T03: Ablations (ACCEPTED)
-- P9-T04: Consolidated analysis (ACCEPTED)
+P10: Admissions packaging
+- P10-T01: One-command demo (ACCEPTED)
+- P10-T02: Research-style report (TODO)
+- P10-T03: README + architecture + demo video (TODO)
+- P10-T04: CV/SOP evidence pack (TODO)
 
 ## Gold Core
 - differential-drive AMR in Gazebo;
@@ -62,5 +63,5 @@ ROS 2, Gazebo, Nav2, SLAM Toolbox, robot_localization.
 - Push to GitHub fails without VPN.
 
 ## Next gate
-P9 must deliver fault injection (T01), experiment runner (T02), ablations (T03),
-and consolidated analysis (T04).
+P10 must deliver one-command demo (T01), research report (T02),
+README + architecture + demo video (T03), and CV/SOP evidence pack (T04).

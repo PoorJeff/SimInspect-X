@@ -285,6 +285,9 @@ class MissionExecutor(Node):
         self._timer = self.create_timer(0.2, self._tick)
 
         self.get_logger().info("Mission executor ready")
+        # P10-T01: fire E_START so the node leaves IDLE (was never
+        # triggered elsewhere; _tick would otherwise early-return).
+        self.sm.on_event(E_START)
 
     # ------------------------------------------------------------------
     # Subscriber callbacks

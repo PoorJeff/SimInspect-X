@@ -78,3 +78,12 @@ Unresolved issues and blockers only. Resolved items are kept with a strike-throu
   publishing node is asset_registry.py inside siminspect_benchmark;
   siminspect_assets has no .py files.
 - Source: audit P8-T03 finding F1 (pre-existing drift, non-blocking)
+
+## RESOLVED — P5/P8 wiring debt closed in P10-T01
+- RESOLVED 2026-08-13 (P10-T01): two runtime wiring gaps surfaced while wiring the
+  one-command demo, both closed (node-glue, D-007; runtime still pending Ubuntu OI-005):
+  1. gauge vision had no ROS node -> added gauge_vision_node.py + pure
+     vision_pipeline.py (detector->reader->confidence) publishing
+     /inspection/gauge_reading.
+  2. mission_executor never fired E_START -> node sat at IDLE forever; now fires
+     E_START in __init__.
