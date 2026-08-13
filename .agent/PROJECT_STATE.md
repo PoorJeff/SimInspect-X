@@ -21,7 +21,7 @@ Public title:
 P8: Adaptive mission execution
 - P8-T01: Mission executive state machine (ACCEPTED)
 - P8-T02: Inspection result/report schema (ACCEPTED)
-- P8-T03: Route/asset retry policy (TODO)
+- P8-T03: Route/asset retry policy (ACCEPTED)
 - P8-T04: Optional mission ordering heuristic (TODO)
 
 ## Gold Core

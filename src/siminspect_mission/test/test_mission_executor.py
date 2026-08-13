@@ -23,6 +23,7 @@ from mission_executor import (
     E_READING_INVALID, E_RECORDED, E_HOME_REACHED, E_REPORT_EXPORTED,
     E_RETRY_VIEWPOINT, E_TICK,
     MAX_NAV_RETRIES, MAX_VIEWPOINT_ATTEMPTS, MAX_READER_RETRIES,
+    handle_nav_fail,
 )
 
 class FakeAsset:
@@ -238,3 +239,33 @@ def test_failure_reason_reset_on_new_asset():
 
     sm.on_event(E_TICK)  # advance to asset a1
     assert sm.last_failure_reason is None
+
+
+def test_nav_fail_resend_until_exhausted():
+    """OI-008: node must re-send the goal while nav retry budget remains."""
+    sm = MissionStateMachine()
+    sm.state = S_NAVIGATE
+
+    assert handle_nav_fail(sm) is True          # budget remains -> re-send
+    assert sm.state == S_NAVIGATE
+    assert sm.nav_retries == 1
+
+    assert handle_nav_fail(sm) is False         # budget exhausted -> move on
+    assert sm.state == S_SELECT_VIEWPOINT
+    assert sm.nav_retries == 0                  # reset for next viewpoint
+    assert sm.viewpoint_attempts == 1           # D-010 invariant preserved
+
+
+def test_reader_exhaustion_consumes_viewpoint_attempts():
+    """Three viewpoints x full reader budget -> RECORD with low_confidence."""
+    sm = MissionStateMachine()
+    for _ in range(MAX_VIEWPOINT_ATTEMPTS):
+        sm.state = S_VALIDATE
+        for _ in range(MAX_READER_RETRIES):
+            sm.on_event(E_READING_INVALID)
+            if sm.state == S_INSPECT:
+                sm.on_event(E_READING_RECEIVED)   # next reading arrives
+
+    assert sm.state == S_RECORD
+    assert sm.viewpoint_attempts == MAX_VIEWPOINT_ATTEMPTS
+    assert sm.last_failure_reason == "low_confidence"

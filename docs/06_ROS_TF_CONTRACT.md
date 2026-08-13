@@ -114,7 +114,7 @@ is governed by the Mission Executive state machine (`NAVIGATE → PRECISION_APPR
 | `/camera/image_raw` | `siminspect_sim` | `siminspect_gauge_vision` |
 | `/camera/camera_info` | `siminspect_sim` | `siminspect_gauge_vision` |
 | `/inspection/assets` | `siminspect_assets` | `siminspect_viewpoint_planner`, `siminspect_mission` |
-| `/inspection/candidate_viewpoints` | `siminspect_viewpoint_planner` | `siminspect_mission` |
+| `/inspection/candidate_viewpoints` | `siminspect_viewpoint_planner` | `siminspect_viewpoint_planner` (viz markers) |
 | `/inspection/selected_viewpoint` | `siminspect_viewpoint_planner` | `siminspect_mission`, `siminspect_navigation` |
 | `/inspection/retry_viewpoint` | `siminspect_precision_control` | `siminspect_mission` |
 | `/inspection/gauge_reading` | `siminspect_gauge_vision` | `siminspect_mission`, `siminspect_benchmark` |

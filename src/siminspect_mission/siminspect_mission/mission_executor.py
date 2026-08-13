@@ -80,6 +80,19 @@ MAX_VIEWPOINT_ATTEMPTS = 3
 MAX_READER_RETRIES = 3
 
 
+def handle_nav_fail(sm):
+    """Fire E_NAV_FAIL and report whether the node must re-send the Nav2 goal.
+
+    The state machine keeps state S_NAVIGATE while nav retry budget
+    remains; the node layer must detect this and re-dispatch the goal
+    (OI-008). Re-dispatch happens on the next tick via
+    _nav_retry_pending to avoid synchronous recursion in the action
+    callbacks.
+    """
+    _, new = sm.on_event(E_NAV_FAIL)
+    return new == S_NAVIGATE
+
+
 class MissionStateMachine:
     """Pure state machine with bounded retries. No ROS dependencies."""
 
@@ -239,6 +252,7 @@ class MissionExecutor(Node):
         self.asset_inspect_time = 0.0  # precision+inspect duration
         self._nav_start_ts = None
         self._inspect_start_ts = None
+        self._nav_retry_pending = False   # OI-008: re-send goal on next tick
 
         # Timer drives the state machine
         self._timer = self.create_timer(0.2, self._tick)
@@ -284,7 +298,8 @@ class MissionExecutor(Node):
 
     def _tick(self):
         s = self.sm.state
-        if s == self.last_state:
+        if s == self.last_state and not (
+                s == S_NAVIGATE and self._nav_retry_pending):
             return
         self.last_state = s
         self._publish_state()
@@ -315,6 +330,7 @@ class MissionExecutor(Node):
             # (In a full system we might trigger the planner here.)
 
         elif s == S_NAVIGATE:
+            self._nav_retry_pending = False
             self._start_navigation()
 
         elif s == S_PRECISION_APPROACH:
@@ -351,13 +367,16 @@ class MissionExecutor(Node):
     # Action handlers
     # ------------------------------------------------------------------
 
+    def _on_nav_fail(self):
+        self._nav_retry_pending = handle_nav_fail(self.sm)
+
     def _start_navigation(self):
         if self.selected_viewpoint is None:
             self.get_logger().warn("No viewpoint to navigate to")
             return
         if not self._nav_client.wait_for_server(timeout_sec=5):
             self.get_logger().error("Nav2 not available")
-            self.sm.on_event(E_NAV_FAIL)
+            self._on_nav_fail()
             return
 
         self._nav_start_ts = time.time()
@@ -373,14 +392,14 @@ class MissionExecutor(Node):
     def _nav_done_cb(self, future):
         goal_handle = future.result()
         if not goal_handle.accepted:
-            self.sm.on_event(E_NAV_FAIL)
+            self._on_nav_fail()
             return
         if self._nav_start_ts is not None:
             self.asset_nav_time += time.time() - self._nav_start_ts
             self._nav_start_ts = None
         result_future = goal_handle.get_result_async()
         result_future.add_done_callback(
-            lambda f: self.sm.on_event(E_NAV_OK if f.result().error_code == 0 else E_NAV_FAIL)
+            lambda f: self.sm.on_event(E_NAV_OK) if f.result().error_code == 0 else self._on_nav_fail()
         )
 
     def _home_done_cb(self, future):

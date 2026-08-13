@@ -48,15 +48,35 @@ Unresolved issues and blockers only. Resolved items are kept with a strike-throu
   reading (was misrecorded as success). Found by /audit-work round 1;
   fix re-verified + re-audited PASS (32/32 tests).
 
-## OI-008 — Nav retry with remaining budget does not re-trigger goal
-- Severity: LOW (deferred to P8-T03)
-- E_NAV_FAIL with retries left keeps state S_NAVIGATE, but MissionExecutor
-  ._tick only reacts to state CHANGES, so no new Nav2 goal is sent; the
-  retry relies on the original async callback path. Revisit in P8-T03
-  (route/asset retry policy).
+## RESOLVED — OI-008 Nav retry with remaining budget does not re-trigger goal
+- RESOLVED 2026-08-13 (P8-T03): pure helper handle_nav_fail(sm) + node
+  _nav_retry_pending flag. _tick processes S_NAVIGATE when the flag is
+  set even if the state did not change; all E_NAV_FAIL sites funnel
+  through _on_nav_fail(). Re-dispatch is delayed to the next 0.2 s tick
+  (no synchronous recursion). Test test_nav_fail_resend_until_exhausted.
 
-## OI-009 — docs/06 lists /inspection/candidate_viewpoints subscription
-- Severity: LOW (T01 leftover)
-- docs/06 ROS contract lists the mission node subscribing to
-  /inspection/candidate_viewpoints, but mission_executor.py does not
-  subscribe to it. Reconcile docs and code during P8-T03/P10 cleanup.
+## RESOLVED — OI-009 docs/06 candidate_viewpoints subscription mismatch
+- RESOLVED 2026-08-13 (P8-T03): code evidence shows only the viewpoint
+  planner subscribes to /inspection/candidate_viewpoints (its own viz
+  markers). docs/06 permission table subscriber column corrected from
+  siminspect_mission to siminspect_viewpoint_planner.
+
+## OI-010 — _nav_done_cb reads error_code on NavigateToPose result
+- Severity: MEDIUM (latent runtime bug; fix before Ubuntu runtime run)
+- The result lambda does `f.result().error_code`, but
+  nav2_msgs/action/NavigateToPose result is std_msgs/Empty (no such
+  field). At runtime this raises AttributeError in the callback, so
+  E_NAV_OK/E_NAV_FAIL never fires. Correct check: goal status via
+  ClientGoalHandle.status == GoalStatus.STATUS_SUCCEEDED.
+- Source: audit P8-T03 finding F3 (pre-existing, out of T03 scope)
+
+## OI-011 — docs/06 permission table remaining drift
+- Severity: LOW (P10 documentation cleanup)
+- /inspection/gauge_reading: p2_selector.py (viewpoint_planner) also
+  subscribes; table does not list it.
+- /inspection/selected_viewpoint: handoff_manager.py (precision_control)
+  subscribes; table lists siminspect_navigation which does not.
+- /inspection/assets: table lists publisher siminspect_assets, but the
+  publishing node is asset_registry.py inside siminspect_benchmark;
+  siminspect_assets has no .py files.
+- Source: audit P8-T03 finding F1 (pre-existing drift, non-blocking)

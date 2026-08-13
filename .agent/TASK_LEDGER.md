@@ -40,7 +40,7 @@ Status values: TODO / IN_PROGRESS / READY_FOR_REVIEW / ACCEPTED / BLOCKED / DEFE
 | P7-T04 | PID vs MPC paired benchmark | ACCEPTED | verified PASS, audited PASS |
 | P8-T01 | mission executive | ACCEPTED | verified PASS, audited PASS |
 | P8-T02 | inspection result/report schema | ACCEPTED | verified PASS, audited PASS |
-| P8-T03 | route/asset retry policy | TODO | failure handling |
+| P8-T03 | route/asset retry policy | ACCEPTED | verified PASS, audited PASS |
 | P8-T04 | optional mission ordering heuristic | TODO | route comparison |
 | P9-T01 | fault injector | TODO | scenario set |
 | P9-T02 | experiment runner | TODO | seed sweep |
