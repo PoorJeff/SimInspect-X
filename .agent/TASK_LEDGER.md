@@ -45,7 +45,7 @@ Status values: TODO / IN_PROGRESS / READY_FOR_REVIEW / ACCEPTED / BLOCKED / DEFE
 | P9-T01 | fault injector | ACCEPTED | verified PASS, audited PASS |
 | P9-T02 | experiment runner | ACCEPTED | verified PASS, audited PASS |
 | P9-T03 | ablations | ACCEPTED | verified PASS, audited PASS |
-| P9-T04 | consolidated analysis | TODO | auto-generated plots |
+| P9-T04 | consolidated analysis | ACCEPTED | verified PASS, audited PASS |
 | P10-T01 | one-command demo | TODO | clean run |
 | P10-T02 | research-style report | TODO | completed report |
 | P10-T03 | README + architecture + demo video | TODO | reviewer-ready |

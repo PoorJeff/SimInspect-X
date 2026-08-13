@@ -24,7 +24,7 @@ P9: Robustness and repeatable experiments
 - P9-T01: Fault injector (ACCEPTED)
 - P9-T02: Experiment runner (ACCEPTED)
 - P9-T03: Ablations (ACCEPTED)
-- P9-T04: Consolidated analysis (TODO)
+- P9-T04: Consolidated analysis (ACCEPTED)
 
 ## Gold Core
 - differential-drive AMR in Gazebo;

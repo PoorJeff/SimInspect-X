@@ -12,6 +12,9 @@
   <depend>siminspect_interfaces</depend>
   <depend>std_msgs</depend>
   <depend>python3-yaml</depend>
+  <depend>python3-matplotlib</depend>
+  <depend>python3-numpy</depend>
+  <depend>python3-scipy</depend>
   <depend>ament_index_python</depend><depend>ros_gz_bridge</depend>
   <test_depend>ament_cmake_pytest</test_depend>
   <test_depend>python3-pytest</test_depend>
