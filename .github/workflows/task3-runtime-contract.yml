@@ -1,0 +1,17 @@
+name: Task 3 Runtime Contract
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  container-contract:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build exact Task 3 image
+        run: docker build --no-cache --progress=plain -f docker/Dockerfile -t siminspect-x:gate-a .
+      - name: Verify container contract
+        run: |
+          docker run --rm             -v "$PWD:/home/siminspect/ws"             -w /home/siminspect/ws             siminspect-x:gate-a             bash -lc './scripts/verify_container_contract.sh'
