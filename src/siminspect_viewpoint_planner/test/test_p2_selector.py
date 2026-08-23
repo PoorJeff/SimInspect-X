@@ -32,6 +32,7 @@ def _make_sel():
     sel.current_asset_id = "test"
     sel.blacklist = []
     sel.attempt = 0
+    sel.enable_reinspect = True
     sel.pub = FakePublisher()
     sel._logger = FakeLogger()
     sel.get_logger = lambda: sel._logger
