@@ -35,3 +35,9 @@ def test_ci_delegates_to_shared_verifier():
     workflow = (ROOT / ".github/workflows/ci.yml").read_text(encoding="utf-8")
     assert "./scripts/verify_foundation.sh" in workflow
     assert "colcon test --return-code-on-test-failure" not in workflow
+
+
+def test_setup_refreshes_apt_lists_before_rosdep_install():
+    setup = (ROOT / "setup.sh").read_text(encoding="utf-8")
+    assert "sudo -n apt-get update" in setup
+    assert setup.index("sudo -n apt-get update") < setup.index("rosdep install")
