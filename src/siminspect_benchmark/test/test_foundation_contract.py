@@ -1,170 +1,107 @@
 from pathlib import Path
 import re
-import shlex
+
+import yaml
+
 
 ROOT = Path(__file__).resolve().parents[3]
+WORKSPACE_MOUNT = "$" + "{{ github.workspace }}:/home/siminspect/ws"
+CANONICAL_HEADLESS_RUN = "\n".join(
+    [
+        "docker run --rm --user root \\",
+        "  -e DISPLAY= \\",
+        f'  -v "{WORKSPACE_MOUNT}" \\',
+        "  -w /home/siminspect/ws \\",
+        "  siminspect-x:ci \\",
+        "  bash -lc './scripts/verify_foundation.sh'",
+    ]
+) + "\n"
+APT_BLOCK = re.compile(
+    r"(?m)^RUN apt-get update && apt-get install -y --no-install-recommends \\\n"
+    r"(?P<packages>(?:^[ \t]+[^\n]* \\\n)+?)"
+    r"^[ \t]+&& add-apt-repository universe \\\n"
+)
+INLINE_COLCON_TEST = "colcon test --return-code-on-test-failure"
 
 
-def _active_lines(text):
-    return [line for line in text.splitlines() if not line.lstrip().startswith("#")]
+def _workflow_steps(workflow):
+    try:
+        return yaml.safe_load(workflow)["jobs"]["build-and-test"]["steps"]
+    except (KeyError, TypeError, yaml.YAMLError):
+        return []
 
 
-def _workflow_runs(workflow):
-    lines = workflow.splitlines()
-    runs = []
-    step_name = None
-    index = 0
-    while index < len(lines):
-        line = lines[index]
-        step_match = re.fullmatch(r"\s*-\s+name:\s+(?P<name>.+?)\s*(?:#.*)?", line)
-        if step_match:
-            step_name = step_match.group("name")
-            index += 1
-            continue
-        if re.match(r"^\s*-\s+", line):
-            step_name = None
-        match = re.match(r"^\s*(?:-\s+)?run:\s*(?P<value>.*)$", line)
-        if not match or line.lstrip().startswith("#"):
-            index += 1
-            continue
-        value = match.group("value")
-        if value.startswith("|"):
-            run_indent = line.index("run:")
-            end = index + 1
-            while end < len(lines):
-                next_line = lines[end]
-                if (
-                    next_line.strip()
-                    and len(next_line) - len(next_line.lstrip()) <= run_indent
-                ):
-                    break
-                end += 1
-            value = "\n".join(lines[index + 1:end])
-            index = end
-        else:
-            index += 1
-        runs.append((step_name, value))
-    return runs
+def _workflow_run_values(workflow):
+    try:
+        jobs = yaml.safe_load(workflow)["jobs"].values()
+    except (AttributeError, KeyError, TypeError, yaml.YAMLError):
+        return []
+    return [
+        step["run"]
+        for job in jobs
+        if isinstance(job, dict)
+        for step in job.get("steps", [])
+        if isinstance(step, dict) and isinstance(step.get("run"), str)
+    ]
 
 
-def _executed_shell_lines(script):
-    lines = []
-    heredoc_delimiter = None
-    for raw_line in script.splitlines():
-        if heredoc_delimiter:
-            if raw_line.strip() == heredoc_delimiter:
-                heredoc_delimiter = None
-            continue
-        line = raw_line.strip()
-        if not line:
-            continue
-        line = line.split(" #", 1)[0].rstrip()
-        if not line or line.startswith("#"):
-            continue
-        heredoc_match = re.search(
-            r"""<<-?\s*['"]?([A-Za-z_][A-Za-z0-9_]*)['"]?""", line
-        )
-        if heredoc_match:
-            heredoc_delimiter = heredoc_match.group(1)
-        lines.append(line)
-    return lines
-
-
-def _has_active_ci_verifier(workflow):
+def _has_canonical_ci_verifier(workflow):
     run = next(
         (
-            command
-            for step_name, command in _workflow_runs(workflow)
-            if step_name == "Build and test (headless)"
+            step.get("run")
+            for step in _workflow_steps(workflow)
+            if isinstance(step, dict) and step.get("name") == "Build and test (headless)"
         ),
         None,
     )
-    if run is None:
-        return False
-    try:
-        tokens = shlex.split(
-            " ".join(line.rstrip("\\").rstrip() for line in _executed_shell_lines(run))
+    return run == CANONICAL_HEADLESS_RUN
+
+
+def _workflow_has_inline_colcon_test(workflow):
+    return any(INLINE_COLCON_TEST in run for run in _workflow_run_values(workflow))
+
+
+def _canonical_apt_block(dockerfile):
+    match = APT_BLOCK.search(dockerfile)
+    return match.group("packages") if match else ""
+
+
+def _has_canonical_apt_package(dockerfile, package):
+    return bool(
+        re.search(
+            rf"(?m)^[ \t]*{re.escape(package)}[ \t]+\\[ \t]*$",
+            _canonical_apt_block(dockerfile),
         )
-    except ValueError:
-        return False
-    return tokens == [
-        "docker",
-        "run",
-        "--rm",
-        "--user",
-        "root",
-        "-e",
-        "DISPLAY=",
-        "-v",
-        "$" + "{{ github.workspace }}:/home/siminspect/ws",
-        "-w",
-        "/home/siminspect/ws",
-        "siminspect-x:ci",
-        "bash",
-        "-lc",
-        "./scripts/verify_foundation.sh",
-    ]
+    )
 
 
 def _active_shell_command_index(text, command):
     pattern = re.compile(rf"\s*{re.escape(command)}\s*(?:#.*)?$")
     return next(
-        (index for index, line in enumerate(_active_lines(text)) if pattern.fullmatch(line)),
+        (
+            index
+            for index, line in enumerate(text.splitlines())
+            if not line.lstrip().startswith("#") and pattern.fullmatch(line)
+        ),
         None,
     )
 
 
-def _active_shell_prefix_index(text, command):
-    pattern = re.compile(rf"\s*{re.escape(command)}(?:\s+|$)")
-    return next(
-        (index for index, line in enumerate(_active_lines(text)) if pattern.match(line)),
-        None,
-    )
-
-
-def _has_docker_apt_package(text, package):
-    for command in re.findall(r"(?m)^RUN\s+((?:[^\n]*\\\n)*[^\n]*)", text):
-        command = "\n".join(
-            line.split(" #", 1)[0]
-            for line in command.splitlines()
+def _apt_refresh_precedes_rosdep_install(setup):
+    apt_update = _active_shell_command_index(setup, "sudo -n apt-get update")
+    rosdep_install = next(
+        (
+            index
+            for index, line in enumerate(setup.splitlines())
             if not line.lstrip().startswith("#")
-        ).replace("\\\n", " ")
-        try:
-            apt_install = re.search(r"\bapt-get\s+install\b(?P<packages>.*)", command)
-            tokens = shlex.split(apt_install.group("packages")) if apt_install else []
-        except ValueError:
-            continue
-        for token in tokens:
-            if token in {"&&", ";", "||", "|"}:
-                break
-            if token == package:
-                return True
-    return False
-
-
-def _line_invokes_colcon_test(line):
-    direct_pattern = re.compile(
-        r"(?:^|&&|\|\||[;|])\s*(?:[A-Za-z_][A-Za-z0-9_]*=[^\s]+\s+)*"
-        r"colcon\s+test\s+--return-code-on-test-failure\b"
+            and re.match(r"\s*rosdep\s+install(?:\s+|$)", line)
+        ),
+        None,
     )
-    if direct_pattern.search(line):
-        return True
-    bash_pattern = re.compile(r"""\bbash\s+-lc\s+('([^']*)'|"([^"]*)")""")
-    for match in bash_pattern.finditer(line):
-        nested_command = match.group(2) or match.group(3)
-        if _shell_invokes_colcon_test(nested_command):
-            return True
-    return False
-
-
-def _shell_invokes_colcon_test(script):
-    return any(_line_invokes_colcon_test(line) for line in _executed_shell_lines(script))
-
-
-def _workflow_has_duplicate_colcon_test(workflow):
-    return any(
-        _shell_invokes_colcon_test(command)
-        for _, command in _workflow_runs(workflow)
+    return (
+        apt_update is not None
+        and rosdep_install is not None
+        and apt_update < rosdep_install
     )
 
 
@@ -189,26 +126,22 @@ def test_all_docker_builds_use_root_context():
 
 
 def test_dockerfile_initializes_required_runtime_tools():
-    text = (ROOT / "docker/Dockerfile").read_text(encoding="utf-8")
-    assert _has_docker_apt_package(text, "sudo")
-    assert _has_docker_apt_package(text, "build-essential")
-    assert re.search(r"(?m)^RUN\s+rosdep\s+init\s*(?:#.*)?$", text)
-    assert re.search(r"(?m)^USER\s+siminspect\s*(?:#.*)?$", text)
+    dockerfile = (ROOT / "docker/Dockerfile").read_text(encoding="utf-8")
+    assert _has_canonical_apt_package(dockerfile, "sudo")
+    assert _has_canonical_apt_package(dockerfile, "build-essential")
+    assert re.search(r"(?m)^RUN\s+rosdep\s+init\s*(?:#.*)?$", dockerfile)
+    assert re.search(r"(?m)^USER\s+siminspect\s*(?:#.*)?$", dockerfile)
 
 
 def test_ci_delegates_to_shared_verifier():
     workflow = (ROOT / ".github/workflows/ci.yml").read_text(encoding="utf-8")
-    assert _has_active_ci_verifier(workflow)
-    assert not _workflow_has_duplicate_colcon_test(workflow)
+    assert _has_canonical_ci_verifier(workflow)
+    assert not _workflow_has_inline_colcon_test(workflow)
 
 
 def test_setup_refreshes_apt_lists_before_rosdep_install():
     setup = (ROOT / "setup.sh").read_text(encoding="utf-8")
-    apt_update_index = _active_shell_command_index(setup, "sudo -n apt-get update")
-    rosdep_install_index = _active_shell_prefix_index(setup, "rosdep install")
-    assert apt_update_index is not None
-    assert rosdep_install_index is not None
-    assert apt_update_index < rosdep_install_index
+    assert _apt_refresh_precedes_rosdep_install(setup)
 
 
 def test_ros_interface_files_do_not_start_with_utf8_bom():
@@ -222,58 +155,89 @@ def test_ros_interface_files_do_not_start_with_utf8_bom():
         assert not interface_file.read_bytes().startswith(b"\xef\xbb\xbf"), interface_file
 
 
-def test_active_instruction_matchers_reject_review_mutations():
+def test_canonical_contract_rejects_review_mutations():
     workflow = (ROOT / ".github/workflows/ci.yml").read_text(encoding="utf-8")
-    broken_workflow = workflow.replace(
+    no_op_workflow = workflow.replace(
         "bash -lc './scripts/verify_foundation.sh'",
         "echo no-op  # ./scripts/verify_foundation.sh",
     )
-    assert broken_workflow != workflow
-    assert not _has_active_ci_verifier(broken_workflow)
+    assert not _has_canonical_ci_verifier(no_op_workflow)
 
     heredoc_workflow = """
+jobs:
+  build-and-test:
+    steps:
       - name: Build and test (headless)
         run: |
           cat <<'EOF'
           bash -lc './scripts/verify_foundation.sh'
           EOF
 """
-    assert not _has_active_ci_verifier(heredoc_workflow)
+    assert not _has_canonical_ci_verifier(heredoc_workflow)
+
+    missing_continuations = workflow.replace(" " + "\\\n", "\n")
+    assert not _has_canonical_ci_verifier(missing_continuations)
 
     setup = (ROOT / "setup.sh").read_text(encoding="utf-8")
-    broken_setup = setup.replace("sudo -n apt-get update", "# sudo -n apt-get update")
-    assert broken_setup != setup
-    assert _active_shell_command_index(
-        broken_setup, "sudo -n apt-get update"
-    ) is None
+    assert not _apt_refresh_precedes_rosdep_install(
+        setup.replace("sudo -n apt-get update", "# sudo -n apt-get update")
+    )
+    assert not _apt_refresh_precedes_rosdep_install(
+        setup.replace(
+            "sudo -n apt-get update\nrosdep install",
+            "rosdep install\nsudo -n apt-get update",
+        )
+    )
 
     dockerfile = (ROOT / "docker/Dockerfile").read_text(encoding="utf-8")
-    broken_dockerfile = dockerfile.replace("build-essential", "# build-essential", 1)
-    assert broken_dockerfile != dockerfile
-    assert not _has_docker_apt_package(broken_dockerfile, "build-essential")
+    assert not _has_canonical_apt_package(
+        dockerfile.replace("build-essential", "# build-essential", 1),
+        "build-essential",
+    )
+    echo_dockerfile = dockerfile.replace(
+        "build-essential", "removed-build-essential", 1
+    )
+    echo_dockerfile += "\nRUN echo build-essential\n"
+    assert not _has_canonical_apt_package(echo_dockerfile, "build-essential")
 
-    echo_dockerfile = dockerfile.replace("build-essential", "removed-build-essential", 1)
-    echo_dockerfile += "\n".join(("", "RUN echo \\", "    build-essential", ""))
-    assert not _has_docker_apt_package(echo_dockerfile, "build-essential")
+    echo_apt_dockerfile = dockerfile.replace(
+        "build-essential", "removed-build-essential", 1
+    )
+    echo_apt_dockerfile += "\nRUN echo apt-get install build-essential\n"
+    assert not _has_canonical_apt_package(echo_apt_dockerfile, "build-essential")
+
+    cross_block_echo = dockerfile.replace(
+        "build-essential", "removed-build-essential", 1
+    ).replace(
+        "ENV LANG=en_US.UTF-8",
+        "RUN echo \\\n    apt-get install \\\n    build-essential \\\n\nENV LANG=en_US.UTF-8",
+    )
+    assert not _has_canonical_apt_package(cross_block_echo, "build-essential")
 
     duplicate_runs = (
         "run: colcon test --return-code-on-test-failure",
         "run: bash -lc 'colcon test --return-code-on-test-failure'",
         "run: |\n          cd . && colcon test --return-code-on-test-failure",
         "run: FOO=1 colcon test --return-code-on-test-failure",
+        'run: "colcon test --return-code-on-test-failure"',
+        "run: FOO='value with spaces' colcon test --return-code-on-test-failure",
+        "run: >-\n          colcon test --return-code-on-test-failure",
     )
     for run in duplicate_runs:
-        duplicate_workflow = (
-            f"{workflow}\n      - name: Duplicate test\n        {run}\n"
-        )
-        assert _workflow_has_duplicate_colcon_test(duplicate_workflow)
+        duplicate_workflow = f"{workflow}\n      - name: Duplicate test\n        {run}\n"
+        assert _workflow_has_inline_colcon_test(duplicate_workflow)
 
-    inert_workflow = """
+    other_job_duplicate = f"{workflow}\n  unrelated:\n    steps:\n      - run: {INLINE_COLCON_TEST}\n"
+    assert _workflow_has_inline_colcon_test(other_job_duplicate)
+
+    inert_colcon_workflow = """
+jobs:
+  build-and-test:
+    steps:
       - name: Inert text
         run: |
           cat <<'EOF'
           colcon test --return-code-on-test-failure
           EOF
-          echo no-op  # colcon test --return-code-on-test-failure
 """
-    assert not _workflow_has_duplicate_colcon_test(inert_workflow)
+    assert _workflow_has_inline_colcon_test(inert_colcon_workflow)
