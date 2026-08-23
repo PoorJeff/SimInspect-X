@@ -42,3 +42,14 @@ def test_setup_refreshes_apt_lists_before_rosdep_install():
     setup = (ROOT / "setup.sh").read_text(encoding="utf-8")
     assert "sudo -n apt-get update" in setup
     assert setup.index("sudo -n apt-get update") < setup.index("rosdep install")
+
+
+def test_ros_interface_files_do_not_start_with_utf8_bom():
+    interface_files = sorted(
+        path
+        for extension in ("msg", "srv", "action")
+        for path in ROOT.glob(f"src/**/*.{extension}")
+    )
+    assert interface_files
+    for interface_file in interface_files:
+        assert not interface_file.read_bytes().startswith(b"\xef\xbb\xbf"), interface_file
