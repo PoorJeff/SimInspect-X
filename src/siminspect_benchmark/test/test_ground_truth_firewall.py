@@ -1,6 +1,8 @@
 from pathlib import Path
 import importlib.util
 
+import pytest
+
 
 ROOT = Path(__file__).resolve().parents[3]
 SPEC = importlib.util.spec_from_file_location(
@@ -8,18 +10,32 @@ SPEC = importlib.util.spec_from_file_location(
 )
 
 
-def test_exec_depend_is_a_violation(tmp_path):
+@pytest.mark.parametrize(
+    "tag",
+    [
+        "depend",
+        "build_depend",
+        "build_export_depend",
+        "buildtool_depend",
+        "buildtool_export_depend",
+        "exec_depend",
+        "test_depend",
+        "doc_depend",
+        "group_depend",
+    ],
+)
+def test_dependency_tag_is_a_violation(tmp_path, tag):
     package = tmp_path / "siminspect_bad"
     package.mkdir()
     (package / "package.xml").write_text(
         "<package><name>siminspect_bad</name>"
-        "<exec_depend>siminspect_benchmark</exec_depend></package>",
+        f"<{tag}>siminspect_benchmark</{tag}></package>",
         encoding="utf-8",
     )
     module = importlib.util.module_from_spec(SPEC)
     SPEC.loader.exec_module(module)
     assert module.find_violations(tmp_path) == [
-        "siminspect_bad: exec_depend -> siminspect_benchmark"
+        f"siminspect_bad: {tag} -> siminspect_benchmark"
     ]
 
 
