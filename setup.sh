@@ -13,7 +13,9 @@ echo ""
 
 # Source ROS 2
 if [ -f /opt/ros/jazzy/setup.bash ]; then
+    set +u
     source /opt/ros/jazzy/setup.bash
+    set -u
 else
     echo "ERROR: ROS 2 Jazzy not found at /opt/ros/jazzy/setup.bash"
     echo "Install ROS 2 Jazzy first, or use the provided Dockerfile."

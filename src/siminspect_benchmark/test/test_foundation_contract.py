@@ -29,3 +29,9 @@ def test_dockerfile_initializes_required_runtime_tools():
     assert re.search(r"\bsudo\b", text)
     assert "rosdep init" in text
     assert "USER siminspect" in text
+
+
+def test_ci_delegates_to_shared_verifier():
+    workflow = (ROOT / ".github/workflows/ci.yml").read_text(encoding="utf-8")
+    assert "./scripts/verify_foundation.sh" in workflow
+    assert "colcon test --return-code-on-test-failure" not in workflow
