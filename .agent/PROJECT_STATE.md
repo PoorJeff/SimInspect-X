@@ -26,8 +26,20 @@ FINAL_PROJECT_GATE
 - All 46 ACTIVE tasks ACCEPTED (P0-P10 complete).
 - 3 DEFERRED: S-T01 anomaly detection, S-T02 LLM mission parser,
   S-T03 multi-robot inspection.
-- Gate A runtime validation is blocked by the captured Docker baseline failure:
-  `artifacts/validation/gate-a-baseline/docker-build.log`.
+- Gate A reproducible-foundation validation PASSED on public commit
+  `bda1a26743ae37f223bd4d2947f0bc61c5c2523b`:
+  - clean VMware clone run `20260823T065105Z_bda1a26_gate-a` on Ubuntu
+    24.04.4 LTS;
+  - repository-root Docker build and the shared container/foundation verifiers
+    exited zero;
+  - 10 ROS packages built and 235 tests reported 0 errors, 0 failures and
+    2 skips; the ground-truth firewall passed;
+  - GitHub Actions run `32621617154` completed successfully with the same
+    `head_sha` (the pull-request merge checkout had the identical Git tree);
+  - checksummed evidence is under
+    `artifacts/validation/20260823T065105Z_bda1a26_gate-a/gate-a/` and remains
+    ignored until release packaging.
+- Gates B-E remain pending.
 - Project completion = engineering deliverable complete (46/46);
   research results pending Ubuntu runtime (OI-003/OI-005), recorded
   honestly in REPORT/CV pack.
@@ -64,18 +76,19 @@ ROS 2, Gazebo, Nav2, SLAM Toolbox, robot_localization.
 - photorealistic simulation.
 
 ## Active constraints
-- Windows environment: no ROS 2/colcon/Gazebo runtime. All code is static-only.
+- Windows remains the primary development host; authoritative Ubuntu evidence
+  currently covers Gate A only.
 - Push to GitHub fails without VPN.
 
 ## Runtime evidence gaps (recorded at final gate)
 - OI-003: MPC runtime evidence missing (Windows lacks OSQP; fallback
-  returns zero). Needs Ubuntu 24.04 + OSQP run.
-- OI-005: Ubuntu runtime assumptions unverified (Dockerfile build, Nav2
-  MPPI runtime, ros_gz_bridge sensors, demo mission run). All runtime-
-  dependent gates (P1 build/CI, P2 robot-moves/sensors, P3 EKF/SLAM,
-  P4 nav/recovery, P7 handoff stability, P10 video) remain pending this
-  environment. REPORT.md and CV_EVIDENCE_PACK.md mark all numeric
-  claims `[pending - Ubuntu run]`; no results are fabricated.
+  returns zero). Gate A confirms the OSQP dependency is importable, but Gate B
+  must still prove a non-fallback MPC command in the live runtime.
+- OI-005: Docker image construction, dependency installation, colcon build/test,
+  and the ground-truth firewall are now verified by Gate A. Nav2 MPPI runtime,
+  ros_gz_bridge sensors, live robot motion, the end-to-end demo mission, and
+  Gates B-E remain unverified. REPORT.md and CV_EVIDENCE_PACK.md keep all
+  unsupported numeric claims `[pending - Ubuntu run]`; no results are fabricated.
 
 ## Next gate
-Gate A runtime validation after a reachable Ubuntu/Docker environment is available.
+Gate B component smoke tests in the clean Ubuntu/VMware runtime.

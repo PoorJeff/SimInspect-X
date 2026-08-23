@@ -4,14 +4,21 @@ Unresolved issues and blockers only. Resolved items are kept with a strike-throu
 
 **Status:** implementation complete; runtime validation in progress
 
-## OI-012 — Gate A Docker baseline is blocked
-- Severity: HIGH (runtime validation blocker)
-- Captured 2026-08-13: `docker build --pull --progress=plain -f docker/Dockerfile
-  -t siminspect-x:baseline .` exited 1 because Docker Desktop Linux daemon was
-  unavailable at `npipe:////./pipe/dockerDesktopLinuxEngine`.
-- Evidence: `artifacts/validation/gate-a-baseline/docker-build.log`; the dependent
-  `docker run`/`colcon build` was not executed and its reason is preserved in
-  `artifacts/validation/gate-a-baseline/colcon-build.log`. Gate A remains blocked.
+## RESOLVED — OI-012 Gate A Docker baseline blocker
+- RESOLVED 2026-08-23 on public commit
+  `bda1a26743ae37f223bd4d2947f0bc61c5c2523b`.
+- VMware run `20260823T065105Z_bda1a26_gate-a` used an independent Ubuntu
+  24.04.4 clean clone. The repository-root Docker build, container contract,
+  rosdep installation, colcon build/test/result, and ground-truth firewall all
+  exited zero; 10 packages and 235 tests reported 0 errors, 0 failures and
+  2 skips. The clean clone remained clean.
+- GitHub Actions run `32621617154` completed successfully with the same
+  `head_sha`; its pull-request merge checkout and the head commit have the same
+  Git tree. Checksummed evidence is stored under
+  `artifacts/validation/20260823T065105Z_bda1a26_gate-a/gate-a/`.
+- The first VM build attempt exposed a missing host Buildx plugin rather than a
+  repository defect. That failure remains in `docker-build-attempt-1.log`; the
+  environment was corrected and the required command was rerun successfully.
 
 ## RESOLVED — OI-001 git push blocked (network)
 - RESOLVED 2026-08-13: VPN active, push succeeded. Remote main = dc8cb7b.
@@ -26,8 +33,9 @@ Unresolved issues and blockers only. Resolved items are kept with a strike-throu
 - Severity: MEDIUM (evidence gap)
 - P7-T03/T04 marked ACCEPTED "verified PASS" but MPC has never produced a real
   control command (Windows lacks osqp; fallback returns 0.0; benchmark shows
-  MPC success_rate 0.0 on Windows). Needs an Ubuntu 24.04 + osqp run to
-  demonstrate MPC convergence and to make the E5 comparison real.
+  MPC success_rate 0.0 on Windows). Gate A now proves that the Ubuntu container
+  can import OSQP, but Gate B must still demonstrate a live, non-fallback MPC
+  command before the E5 comparison is real.
 - Ledger wording should be revisited if this run cannot happen before the
   final report.
 
@@ -38,11 +46,13 @@ Unresolved issues and blockers only. Resolved items are kept with a strike-throu
   FA-008); HANDOFF.md and older docs still reference P1/P2 phases.
 - Clean up before P10 documentation tasks.
 
-## OI-005 — Unverified Ubuntu assumptions
+## OI-005 — Remaining Ubuntu runtime assumptions
 - Severity: MEDIUM (risk)
-- Dockerfile never built on Ubuntu; Nav2 MPPI runtime behaviour unverified;
-  ros_gz_bridge sensor data unverified. All blocked on the same missing Ubuntu
-  environment as OI-003.
+- Gate A now verifies the Ubuntu Docker build, dependency installation, colcon
+  build/test/result, and ground-truth firewall on an independent clean clone.
+- Nav2 MPPI runtime behaviour, ros_gz_bridge sensor data, live robot motion,
+  the end-to-end demo mission, and Gates B-E remain unverified. OI-005 stays
+  open until those runtime paths have evidence.
 
 ## OI-006 — `task` subagent tool availability varies by session
 - Severity: LOW (workflow)
