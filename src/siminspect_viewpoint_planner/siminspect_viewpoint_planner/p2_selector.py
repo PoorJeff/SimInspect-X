@@ -1,23 +1,29 @@
 #!/usr/bin/env python3
-"""P2 adaptive selector: P1 + confidence-triggered re-inspection. Max 3 attempts."""
+"""P2 selector: request-driven P1 with per-asset candidate history."""
 import json
 import math
 import os
 import rclpy
 from rclpy.node import Node
+from rclpy.qos import QoSProfile, ReliabilityPolicy, DurabilityPolicy
 from geometry_msgs.msg import PoseStamped
-from siminspect_interfaces.msg import GaugeReading, AssetArray
+from siminspect_interfaces.msg import AssetArray, MissionState
 from p1_selector import P1Selector
 
-CONF_THRESHOLD = 0.80
-MAX_ATTEMPTS = 3
+MISSION_STATE_QOS = QoSProfile(
+    depth=1,
+    reliability=ReliabilityPolicy.RELIABLE,
+    durability=DurabilityPolicy.TRANSIENT_LOCAL,
+)
 
 class P2Selector(Node):
     def __init__(self):
         super().__init__("p2_selector")
         self.pub = self.create_publisher(PoseStamped, "/inspection/selected_viewpoint", 10)
         self.asset_sub = self.create_subscription(AssetArray, "/inspection/assets", self.on_assets, 10)
-        self.reader_sub = self.create_subscription(GaugeReading, "/inspection/gauge_reading", self.on_reading, 10)
+        self.state_sub = self.create_subscription(
+            MissionState, "/inspection/mission_state",
+            self.on_mission_state, MISSION_STATE_QOS)
         self.p1 = P1Selector.__new__(P1Selector)
         # P9-T03 ablation support: scorer weights + re-inspection toggle.
         self.declare_parameter("weights_json", "")
@@ -36,37 +42,47 @@ class P2Selector(Node):
             self.enable_reinspect = (
                 os.environ["SIMINSPECT_REINSPECT"].lower() == "true")
         self.assets = {}
-        self.blacklist = []
-        self.attempt = 0
-        self.current_asset_id = None
+        self._published_requests = set()
+        self._published_indices = {}
+        self._pending_request = None
 
     def on_assets(self, msg: AssetArray):
         for asset in msg.assets:
             self.assets[asset.id] = asset
-            self.current_asset_id = asset.id
-            self.blacklist = []
-            self.attempt = 0
-            result = self.select_for_asset(asset, self.blacklist)
-            if result is not None:
-                idx, ps = result
-                self.blacklist.append(idx)
-                self.pub.publish(ps)
-                self.get_logger().info(f"P2 initial selection for {asset.id}: candidate {idx}")
+        self._try_publish_pending()
 
-    def on_reading(self, msg: GaugeReading):
-        if not self.enable_reinspect:
-            return  # A4: re-inspection disabled (P1-equivalent)
-        if msg.confidence >= CONF_THRESHOLD:
-            self.get_logger().info(f"P2 reading ok for {msg.asset_id}: conf={msg.confidence:.2f}")
+    def on_mission_state(self, msg: MissionState):
+        if msg.state != "SELECT_VIEWPOINT" or not msg.current_asset_id:
+            self._pending_request = None
             return
-        if self.attempt >= MAX_ATTEMPTS:
-            self.get_logger().warn(f"P2 max attempts ({MAX_ATTEMPTS}) reached for {msg.asset_id}")
+        self._pending_request = (
+            msg.current_asset_id, int(msg.request_id), msg.timestamp)
+        self._try_publish_pending()
+
+    def _try_publish_pending(self):
+        if self._pending_request is None:
             return
-        self.attempt += 1
-        self.get_logger().info(f"P2 re-inspection attempt {self.attempt}/{MAX_ATTEMPTS} for {msg.asset_id}")
-        result = self._select_next_best()
-        if result is not None:
-            self.pub.publish(result)
+        asset_id, request_id, request_stamp = self._pending_request
+        request_key = (asset_id, request_id)
+        if request_key in self._published_requests:
+            return
+        asset = self.assets.get(asset_id)
+        if asset is None:
+            return
+
+        blacklist = (self._published_indices.get(asset_id, [])
+                     if self.enable_reinspect else [])
+        result = self.select_for_asset(asset, blacklist)
+        self._published_requests.add(request_key)
+        if result is None:
+            self.get_logger().warn(f"No remaining candidates for {asset_id}")
+            return
+        idx, pose = result
+        pose.header.stamp = request_stamp
+        self._published_indices.setdefault(asset_id, []).append(idx)
+        self.pub.publish(pose)
+        self.get_logger().info(
+            f"P2 selected candidate {idx} for {asset_id} request {request_id}")
 
     def select_for_asset(self, asset, blacklist):
         px, py = asset.map_pose.position.x, asset.map_pose.position.y
@@ -122,20 +138,6 @@ class P2Selector(Node):
         ps.pose.orientation.z = math.sin(byw / 2)
         ps.pose.orientation.w = math.cos(byw / 2)
         return (best_idx, ps)
-
-    def _select_next_best(self):
-        if self.current_asset_id is None or self.current_asset_id not in self.assets:
-            self.get_logger().error("No current asset for re-inspection")
-            return None
-        asset = self.assets[self.current_asset_id]
-        result = self.select_for_asset(asset, self.blacklist)
-        if result is None:
-            self.get_logger().warn(f"No remaining candidates for {self.current_asset_id}")
-            return None
-        idx, ps = result
-        self.blacklist.append(idx)
-        self.get_logger().info(f"P2 selected candidate {idx} for {self.current_asset_id}")
-        return ps
 
 def main():
     rclpy.init()

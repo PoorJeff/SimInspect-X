@@ -7,6 +7,7 @@ runs the detector -> reader -> confidence pure pipeline, publishes
 """
 import rclpy
 from rclpy.node import Node
+from rclpy.qos import QoSProfile, ReliabilityPolicy, DurabilityPolicy
 from sensor_msgs.msg import Image
 from siminspect_interfaces.msg import GaugeReading, MissionState
 from cv_bridge import CvBridge
@@ -16,6 +17,12 @@ try:
 except ImportError:
     from vision_pipeline import run_pipeline
 
+MISSION_STATE_QOS = QoSProfile(
+    depth=1,
+    reliability=ReliabilityPolicy.RELIABLE,
+    durability=DurabilityPolicy.TRANSIENT_LOCAL,
+)
+
 
 class GaugeVisionNode(Node):
     def __init__(self):
@@ -24,15 +31,20 @@ class GaugeVisionNode(Node):
         self._sub_img = self.create_subscription(
             Image, "/camera/image_raw", self._cb_image, 10)
         self._sub_state = self.create_subscription(
-            MissionState, "/inspection/mission_state", self._cb_state, 10)
+            MissionState, "/inspection/mission_state", self._cb_state,
+            MISSION_STATE_QOS)
         self._pub = self.create_publisher(
             GaugeReading, "/inspection/gauge_reading", 10)
+        self._current_state = ""
         self._current_asset_id = ""
 
     def _cb_state(self, msg):
+        self._current_state = msg.state
         self._current_asset_id = msg.current_asset_id
 
     def _cb_image(self, msg):
+        if self._current_state != "INSPECT" or not self._current_asset_id:
+            return
         img = self._bridge.imgmsg_to_cv2(msg, "bgr8")
         fields = run_pipeline(img, asset_id=self._current_asset_id)
         out = GaugeReading()

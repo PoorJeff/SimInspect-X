@@ -33,7 +33,7 @@ def _record(**overrides):
 
 
 def test_schema_version():
-    assert SCHEMA_VERSION == "1.0"
+    assert SCHEMA_VERSION == "1.1"
 
 
 def test_failure_reason_enum():
@@ -47,8 +47,14 @@ def test_timestamp_is_iso8601():
 
 def test_report_contains_schema_version_and_timestamp():
     report = build_mission_report([], num_assets=5, mission_time_s=10.0,
-                                  timestamp_iso=utc_now_iso())
-    assert report["schema_version"] == "1.0"
+                                  timestamp_iso=utc_now_iso(),
+                                  run_id="run-1",
+                                  expected_asset_ids=["a1"],
+                                  return_home={"status": "success",
+                                               "final_distance_m": 0.02,
+                                               "failure_reason": None})
+    assert report["schema_version"] == "1.1"
+    assert report["run_id"] == "run-1"
     datetime.fromisoformat(report["mission_timestamp"])
 
 
@@ -56,6 +62,21 @@ def test_success_record_failure_reason_null():
     r = _record()
     assert r["status"] == "success"
     assert r["failure_reason"] is None
+
+
+def test_high_confidence_with_failure_reason_is_not_rewritten_as_success():
+    r = _record(confidence=0.95, failure_reason="timeout")
+    assert r["status"] == "failed"
+    assert r["failure_reason"] == "timeout"
+
+
+def test_unknown_failure_reason_is_rejected():
+    try:
+        _record(confidence=None, failure_reason="made_up_reason")
+    except ValueError as exc:
+        assert "made_up_reason" in str(exc)
+    else:
+        raise AssertionError("unknown failure reason must raise ValueError")
 
 
 def test_failed_record_failure_reason():
@@ -117,11 +138,23 @@ def test_mission_report_aggregation():
     bad = _record(asset_id="a2", confidence=0.4, failure_reason="nav_failed",
                   estimated_value=None)
     report = build_mission_report([ok, bad], num_assets=5,
-                                  mission_time_s=100.0, timestamp_iso=utc_now_iso())
+                                  mission_time_s=100.0,
+                                  timestamp_iso=utc_now_iso(),
+                                  run_id="run-aggregation",
+                                  expected_asset_ids=["a1", "a2"],
+                                  return_home={"status": "failed",
+                                               "final_distance_m": None,
+                                               "failure_reason": "timeout"})
     assert report["num_assets"] == 5
     assert report["num_results"] == 2
     assert report["success_count"] == 1
     assert report["schema_version"] == SCHEMA_VERSION
+    assert report["expected_asset_ids"] == ["a1", "a2"]
+    assert report["return_home"] == {
+        "status": "failed",
+        "final_distance_m": None,
+        "failure_reason": "timeout",
+    }
 
 
 def test_failed_record_nav_reason():
