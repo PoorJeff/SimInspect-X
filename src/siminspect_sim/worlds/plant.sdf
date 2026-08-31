@@ -30,48 +30,80 @@
   </light>
 
   <!-- ===== WALLS ===== -->
-  <model name="wall_north"><static>true</static><pose>0 5 1 0 0 0</pose>
-    <link name="link"><visual name="v"><geometry><box size="10 0.2 2"/></geometry><material><ambient>0.6 0.6 0.6</ambient></material></visual>
-    <collision name="c"><geometry><box size="10 0.2 2"/></geometry></collision></link></model>
-  <model name="wall_south"><static>true</static><pose>0 -5 1 0 0 0</pose>
-    <link name="link"><visual name="v"><geometry><box size="10 0.2 2"/></geometry><material><ambient>0.6 0.6 0.6</ambient></material></visual>
-    <collision name="c"><geometry><box size="10 0.2 2"/></geometry></collision></link></model>
-  <model name="wall_east"><static>true</static><pose>5 0 1 0 0 1.57</pose>
-    <link name="link"><visual name="v"><geometry><box size="10 0.2 2"/></geometry><material><ambient>0.6 0.6 0.6</ambient></material></visual>
-    <collision name="c"><geometry><box size="10 0.2 2"/></geometry></collision></link></model>
-  <model name="wall_west"><static>true</static><pose>-5 0 1 0 0 1.57</pose>
-    <link name="link"><visual name="v"><geometry><box size="10 0.2 2"/></geometry><material><ambient>0.6 0.6 0.6</ambient></material></visual>
-    <collision name="c"><geometry><box size="10 0.2 2"/></geometry></collision></link></model>
+  <model name="wall_north"><static>true</static><pose>0 9 1 0 0 0</pose>
+    <link name="link"><visual name="v"><geometry><box><size>18 0.2 2</size></box></geometry><material><ambient>0.6 0.6 0.6</ambient></material></visual>
+    <collision name="c"><geometry><box><size>18 0.2 2</size></box></geometry></collision></link></model>
+  <model name="wall_south"><static>true</static><pose>0 -9 1 0 0 0</pose>
+    <link name="link"><visual name="v"><geometry><box><size>18 0.2 2</size></box></geometry><material><ambient>0.6 0.6 0.6</ambient></material></visual>
+    <collision name="c"><geometry><box><size>18 0.2 2</size></box></geometry></collision></link></model>
+  <model name="wall_east"><static>true</static><pose>9 0 1 0 0 1.57</pose>
+    <link name="link"><visual name="v"><geometry><box><size>18 0.2 2</size></box></geometry><material><ambient>0.6 0.6 0.6</ambient></material></visual>
+    <collision name="c"><geometry><box><size>18 0.2 2</size></box></geometry></collision></link></model>
+  <model name="wall_west"><static>true</static><pose>-9 0 1 0 0 1.57</pose>
+    <link name="link"><visual name="v"><geometry><box><size>18 0.2 2</size></box></geometry><material><ambient>0.6 0.6 0.6</ambient></material></visual>
+    <collision name="c"><geometry><box><size>18 0.2 2</size></box></geometry></collision></link></model>
 
   <!-- ===== PUMP STATION (south-west area) ===== -->
   <model name="pump_unit"><static>true</static><pose>3 2 0 0 0 0</pose>
-    <link name="body"><visual name="v"><geometry><box size="0.6 0.4 0.3"/></geometry><material><ambient>0.2 0.5 0.2</ambient></material></visual>
-    <collision name="c"><geometry><box size="0.6 0.4 0.3"/></geometry></collision></link></model>
+    <link name="body"><visual name="v"><geometry><box><size>0.6 0.4 0.3</size></box></geometry><material><ambient>0.2 0.5 0.2</ambient></material></visual>
+    <collision name="c"><geometry><box><size>0.6 0.4 0.3</size></box></geometry></collision></link></model>
 
   <!-- ===== STORAGE TANK 1 (east side) ===== -->
-  <model name="tank_1"><static>true</static><pose>7 3 0 0 0 0</pose>
-    <link name="body"><visual name="v"><geometry><cylinder radius="0.5" length="2"/></geometry><material><ambient>0.4 0.5 0.6</ambient></material></visual>
-    <collision name="c"><geometry><cylinder radius="0.5" length="2"/></geometry></collision></link></model>
+  <model name="tank_1"><static>true</static><pose>7 2.04 0 0 0 0</pose>
+    <link name="body"><visual name="v"><geometry><cylinder><radius>0.5</radius><length>2</length></cylinder></geometry><material><ambient>0.4 0.5 0.6</ambient></material></visual>
+    <collision name="c"><geometry><cylinder><radius>0.5</radius><length>2</length></cylinder></geometry></collision></link></model>
 
   <!-- ===== STORAGE TANK 2 (east-north) ===== -->
-  <model name="tank_2"><static>true</static><pose>7 6 0 0 0 0</pose>
-    <link name="body"><visual name="v"><geometry><cylinder radius="0.45" length="2.5"/></geometry><material><ambient>0.4 0.5 0.6</ambient></material></visual>
-    <collision name="c"><geometry><cylinder radius="0.45" length="2.5"/></geometry></collision></link></model>
+  <model name="tank_2"><static>true</static><pose>7 6.11 0 0 0 0</pose>
+    <link name="body"><visual name="v"><geometry><cylinder><radius>0.45</radius><length>2.5</length></cylinder></geometry><material><ambient>0.4 0.5 0.6</ambient></material></visual>
+    <collision name="c"><geometry><cylinder><radius>0.45</radius><length>2.5</length></cylinder></geometry></collision></link></model>
 
   <!-- ===== PIPE segment 1 (horizontal, along x) ===== -->
   <model name="pipe_1"><static>true</static><pose>2.5 4.5 0 0 0 0</pose>
-    <link name="body"><visual name="v"><geometry><cylinder radius="0.08" length="4"/></geometry><pose>0 0 0 0 1.57 0</pose><material><ambient>0.5 0.5 0.5</ambient></material></visual>
-    <collision name="c"><geometry><cylinder radius="0.08" length="4"/></geometry><pose>0 0 0 0 1.57 0</pose></collision></link></model>
+    <link name="body"><visual name="v"><geometry><cylinder><radius>0.08</radius><length>4</length></cylinder></geometry><pose>0 0 0 0 1.57 0</pose><material><ambient>0.5 0.5 0.5</ambient></material></visual>
+    <collision name="c"><geometry><cylinder><radius>0.08</radius><length>4</length></cylinder></geometry><pose>0 0 0 0 1.57 0</pose></collision></link></model>
 
   <!-- ===== PIPE segment 2 (vertical) ===== -->
-  <model name="pipe_2"><static>true</static><pose>4 7 1 0 0 0</pose>
-    <link name="body"><visual name="v"><geometry><cylinder radius="0.06" length="3"/></geometry><material><ambient>0.5 0.5 0.5</ambient></material></visual>
-    <collision name="c"><geometry><cylinder radius="0.06" length="3"/></geometry></collision></link></model>
+  <model name="pipe_2"><static>true</static><pose>4.12 7 1 0 0 0</pose>
+    <link name="body"><visual name="v"><geometry><cylinder><radius>0.06</radius><length>3</length></cylinder></geometry><material><ambient>0.5 0.5 0.5</ambient></material></visual>
+    <collision name="c"><geometry><cylinder><radius>0.06</radius><length>3</length></cylinder></geometry></collision></link></model>
 
   <!-- ===== VALVE STATION (north) ===== -->
   <model name="valve_unit"><static>true</static><pose>2 8 0 0 0 0</pose>
-    <link name="body"><visual name="v"><geometry><box size="0.4 0.3 0.4"/></geometry><material><ambient>0.6 0.2 0.2</ambient></material></visual>
-    <collision name="c"><geometry><box size="0.4 0.3 0.4"/></geometry></collision></link></model>
+    <link name="body"><visual name="v"><geometry><box><size>0.4 0.3 0.4</size></box></geometry><material><ambient>0.6 0.2 0.2</ambient></material></visual>
+    <collision name="c"><geometry><box><size>0.4 0.3 0.4</size></box></geometry></collision></link></model>
+
+  <!-- Reusable gauge face instances; names and poses match the asset registry. -->
+  <include>
+    <uri>model://gauge_asset</uri>
+    <name>gauge_pipe_01</name>
+    <pose>2.5 4.5 0.6 0 0 1.57</pose>
+  </include>
+  <include>
+    <uri>model://gauge_asset</uri>
+    <name>gauge_pipe_02</name>
+    <pose>4.0 7.0 0.9 0 0 3.14</pose>
+  </include>
+  <include>
+    <uri>model://gauge_asset</uri>
+    <name>gauge_pump_01</name>
+    <pose>3.0 1.8 1.2 0 0 3.14</pose>
+  </include>
+  <include>
+    <uri>model://gauge_asset</uri>
+    <name>gauge_tank_01</name>
+    <pose>7.0 2.6 0.8 0 0 1.57</pose>
+  </include>
+  <include>
+    <uri>model://gauge_asset</uri>
+    <name>gauge_tank_02</name>
+    <pose>7.0 5.6 1.0 0 0 -1.57</pose>
+  </include>
+  <include>
+    <uri>model://gauge_asset</uri>
+    <name>gauge_valve_01</name>
+    <pose>2.0 7.8 1.2 0 0 0.0</pose>
+  </include>
 
 </world>
 </sdf>

@@ -3,15 +3,25 @@
 import cv2, numpy as np
 
 class GaugeDetector:
-    def __init__(self, min_r=80, max_r=160, cl=50, ch=150):
+    def __init__(self, min_r=80, max_r=160, cl=50, ch=150,
+                 fallback_min_r=35):
         self.min_r = min_r; self.max_r = max_r
         self.cl = cl; self.ch = ch
+        self.fallback_min_r = fallback_min_r
+
+    def _find_circles(self, gray, min_r, max_r):
+        return cv2.HoughCircles(gray, cv2.HOUGH_GRADIENT, dp=1.2,
+            minDist=100, param1=self.ch, param2=30,
+            minRadius=min_r, maxRadius=max_r)
 
     def detect(self, img):
         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-        circles = cv2.HoughCircles(gray, cv2.HOUGH_GRADIENT, dp=1.2,
-            minDist=100, param1=self.ch, param2=30,
-            minRadius=self.min_r, maxRadius=self.max_r)
+        circles = self._find_circles(gray, self.min_r, self.max_r)
+        if circles is None and self.fallback_min_r is not None:
+            fallback_max_r = min(self.min_r - 1, self.max_r)
+            if self.fallback_min_r <= fallback_max_r:
+                circles = self._find_circles(
+                    gray, self.fallback_min_r, fallback_max_r)
         if circles is None:
             return self._fallback(img)
 

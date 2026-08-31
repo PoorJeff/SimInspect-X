@@ -8,7 +8,11 @@ from rclpy.node import Node
 from rclpy.qos import QoSProfile, ReliabilityPolicy, DurabilityPolicy
 from geometry_msgs.msg import PoseStamped
 from siminspect_interfaces.msg import AssetArray, MissionState
-from p1_selector import P1Selector
+
+try:
+    from siminspect_viewpoint_planner.quality_scorer import QualityScorer
+except ImportError:  # Source-tree script execution fallback.
+    from quality_scorer import QualityScorer
 
 MISSION_STATE_QOS = QoSProfile(
     depth=1,
@@ -24,7 +28,6 @@ class P2Selector(Node):
         self.state_sub = self.create_subscription(
             MissionState, "/inspection/mission_state",
             self.on_mission_state, MISSION_STATE_QOS)
-        self.p1 = P1Selector.__new__(P1Selector)
         # P9-T03 ablation support: scorer weights + re-inspection toggle.
         self.declare_parameter("weights_json", "")
         self.declare_parameter("enable_reinspect", True)
@@ -34,8 +37,7 @@ class P2Selector(Node):
             wj = os.environ.get("SIMINSPECT_WEIGHTS", "")
         if wj:
             weights = json.loads(wj)
-        self.p1.scorer = __import__("quality_scorer").QualityScorer(
-            weights=weights)
+        self.scorer = QualityScorer(weights=weights)
         self.enable_reinspect = (
             self.get_parameter("enable_reinspect").value)
         if "SIMINSPECT_REINSPECT" in os.environ:
@@ -102,10 +104,10 @@ class P2Selector(Node):
             ywi = ai + math.pi
             ywi = math.atan2(math.sin(ywi), math.cos(ywi))
             dist = math.hypot(xi - px, yi - py)
-            Dv = self.p1.scorer.score_D(dist)
+            Dv = self.scorer.score_D(dist)
             th = abs(math.atan2(py - yi, px - xi) - ywi)
             if th > math.pi: th = 2*math.pi - th
-            Av = self.p1.scorer.score_A(th)
+            Av = self.scorer.score_A(th)
             Sv = 1.0
             candidates.append((i, xi, yi, ywi, Dv, Av, Sv, 0.0))
 
@@ -120,9 +122,9 @@ class P2Selector(Node):
             i, xi, yi, ywi, Dv, Av, Sv, _ = c
             tr = math.hypot(xi - robot_x, yi - robot_y)
             Tv = tr / max_t if max_t > 0 else 1.0
-            Qv = self.p1.scorer.w_vis * 1.0 + self.p1.scorer.w_d * Dv + \
-                 self.p1.scorer.w_theta * Av + self.p1.scorer.w_s * Sv - \
-                 self.p1.scorer.w_t * Tv
+            Qv = self.scorer.w_vis * 1.0 + self.scorer.w_d * Dv + \
+                 self.scorer.w_theta * Av + self.scorer.w_s * Sv - \
+                 self.scorer.w_t * Tv
             if Qv > best_Q:
                 best_Q = Qv
                 best_idx = i

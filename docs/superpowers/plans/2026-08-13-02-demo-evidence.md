@@ -85,11 +85,11 @@ When the CLI is invoked with `--benchmark-evidence`, the component graph also st
 - Consumes: existing `/inspection/assets`, `/inspection/gauge_reading`, `/odometry/filtered`, `navigate_to_pose`, and `precision_approach`.
 - Produces: `MissionState` fields `state`, `current_asset_id`, `attempt`, `viewpoint_index`, `request_id`, and `timestamp`; B0 or P2 publishes one selected viewpoint per matching request; mission parameters `run_id`, `report_path`, `expected_asset_ids`, and per-state deadlines.
 
-- [ ] **Step 1: Write failing contract tests**
+- [x] **Step 1: Write failing contract tests**
 
 Add tests proving duplicate `AssetArray` messages do not reset `asset_idx`; a reading with the wrong asset ID is ignored; entering `SELECT_VIEWPOINT` increments `request_id`; B0 and P2 each publish exactly once for `(asset_id, request_id)`; P2 blacklists the previous candidate after low confidence; Vision publishes only while state is `INSPECT`; rejected or aborted return-home goals do not emit `HOME_REACHED`; missing odom, viewpoint, and reading expire into bounded failure records; report includes the supplied `run_id` and writes to `report_path`.
 
-- [ ] **Step 2: Run tests and observe the current wiring failures**
+- [x] **Step 2: Run tests and observe the current wiring failures**
 
 Run:
 
@@ -103,15 +103,15 @@ python3 -m pytest \
 
 Expected: FAIL because `request_id`, explicit report parameters, asset filtering, state-gated vision, and strict return-home behavior do not exist.
 
-- [ ] **Step 3: Implement the single-dispatch mission contract**
+- [x] **Step 3: Implement the single-dispatch mission contract**
 
 Make Mission ignore duplicate asset inventories after the first validated load. Publish the current asset and a monotonically increasing `request_id` whenever a viewpoint is required. Make B0 and P2 cache assets but select only for the current request; on a later request for the same asset, P2 excludes previously published candidate indices while B0 deliberately republishes its fixed pose. Make Mission reject readings whose `asset_id` does not match its current asset. Gate Vision on `MissionState.state == "INSPECT"` and a non-empty asset ID. Remove `handoff_manager` from the production launch graph so Mission is the only PrecisionApproach client. Replace return-home degradation with checked goal acceptance, checked `GoalStatus.STATUS_SUCCEEDED`, and final odometry distance `<= 0.10 m`. Add bounded state deadlines that record `timeout` rather than waiting forever.
 
-- [ ] **Step 4: Run the focused tests**
+- [x] **Step 4: Run the focused tests**
 
 Run the Step 2 command. Expected: PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/siminspect_interfaces src/siminspect_mission src/siminspect_viewpoint_planner src/siminspect_gauge_vision src/siminspect_precision_control/launch/precision_approach.launch.py
@@ -121,51 +121,64 @@ git commit -m "fix: close demo mission wiring"
 ### Task 2: Make the simulated gauges visible and installable
 
 **Files:**
+- Create: `src/siminspect_sim/CMakeLists.txt`
+- Create: `src/siminspect_sim/package.xml`
+- Create: `src/siminspect_sim/env-hooks/siminspect_sim.dsv.in`
 - Create: `src/siminspect_sim/models/gauge_asset/model.config`
 - Create: `src/siminspect_sim/models/gauge_asset/model.sdf`
 - Create: `src/siminspect_sim/models/gauge_asset/materials/textures/gauge_face.png`
-- Modify: `src/siminspect_sim/worlds/plant.sdf:46-76`
-- Modify: `src/siminspect_viewpoint_planner/siminspect_viewpoint_planner/candidate_generator.py:1-58`
-- Modify: `src/siminspect_viewpoint_planner/siminspect_viewpoint_planner/p2_selector.py:1-31`
-- Test: `src/siminspect_sim/test/test_world_assets.py`
+- Create: `src/siminspect_sim/test/test_world_assets.py`
+- Modify: `src/siminspect_sim/worlds/plant.sdf`
+- Modify: `src/siminspect_description/urdf/siminspect.urdf.xacro`
+- Modify: `src/siminspect_description/urdf/siminspect.gazebo.xacro`
+- Modify: `src/siminspect_gauge_vision/siminspect_gauge_vision/gauge_detector.py`
+- Modify: `src/siminspect_gauge_vision/test/test_gauge_detector.py`
+- Modify: `src/siminspect_viewpoint_planner/CMakeLists.txt`
+- Modify: `src/siminspect_viewpoint_planner/siminspect_viewpoint_planner/candidate_generator.py`
+- Modify: `src/siminspect_viewpoint_planner/siminspect_viewpoint_planner/p1_selector.py`
+- Modify: `src/siminspect_viewpoint_planner/siminspect_viewpoint_planner/p2_selector.py`
+- Modify: `src/siminspect_viewpoint_planner/test/test_p2_selector.py`
 - Create: `src/siminspect_viewpoint_planner/test/test_installed_imports.py`
 
 **Interfaces:**
-- Consumes: six poses in `src/siminspect_assets/assets/*.yaml` and the blue-needle detector contract.
-- Produces: six named, camera-visible gauge models whose face pose matches the registry; package-qualified imports that work from `install/`.
+- Consumes: six poses in `src/siminspect_assets/assets/*.yaml`, the seven-candidate 0.8 m inspection arc, and the blue-needle detector contract.
+- Produces: an installable Gazebo resource package, six named camera-visible gauge instances whose face pose matches the registry, and package-qualified planner imports that work from `install/`.
+- Acceptance boundary: the canonical 0-100 psi texture proves detector discovery, confidence, and frontal-view proxy only. It does not prove numeric reading error across the five registry ranges/units; per-asset calibration and numeric accuracy remain a later benchmark responsibility.
 
-- [ ] **Step 1: Write failing world/import tests**
+- [x] **Step 1: Write failing world/import tests**
 
-Assert `plant.sdf` includes exactly the six registry IDs, each pose equals its YAML pose within `1e-3`, and `gauge_face.png` yields confidence `>= 0.80` through `run_pipeline()`. Add an installed-space subprocess test importing `siminspect_viewpoint_planner.candidate_generator` and `.p2_selector` without modifying `sys.path`.
+Assert `siminspect_sim` is colcon-discoverable, installs `worlds/` and `models/`, registers the world test, and prepends its relative model share path through an ament environment hook. Assert `plant.sdf` includes exactly the six registry IDs with YAML poses within `1e-3`; every 0.8 m candidate plus a 0.25 m footprint stays inside the expanded enclosure; tank and vertical-pipe support geometry stays at least 5 mm behind the housing rear; the housing front has strict clearance behind the texture; and all four corners of the 0.32 m, +X-facing face project inside the real camera frustum from every candidate, including the camera joint offset, spawn height, 640x480 image, near clip, and FOV. Resize the canonical texture to its nominal pinhole projection in a 640x480 camera frame and require the default detector to return confidence `>= 0.80` with frontal-view proxy `1.0`; retain the original texture contract as a separate check. Assert that the small-radius path does not change the established large-radius solution on the tracked synthetic reference image. Add an isolated installed-layout subprocess test importing `.candidate_generator`, `.p1_selector`, and `.p2_selector` without modifying `sys.path`.
 
-- [ ] **Step 2: Verify failure**
+- [x] **Step 2: Verify failure**
 
 ```bash
-python3 -m pytest src/siminspect_sim/test/test_world_assets.py src/siminspect_viewpoint_planner/test/test_installed_imports.py -q
+python3 -m pytest src/siminspect_sim/test/test_world_assets.py src/siminspect_viewpoint_planner/test/test_installed_imports.py src/siminspect_gauge_vision/test/test_gauge_detector.py::test_default_detector_preserves_large_gauge_solution -q
 ```
 
-Expected: FAIL because the world contains no gauge models and planner modules use top-level imports.
+Expected: FAIL because the simulation package is not installable, the world contains no gauge instances, the enclosure/camera geometry violates visibility constraints, planner modules use top-level imports, and the small-radius detector path does not yet preserve the established large-gauge solution.
 
-- [ ] **Step 3: Implement the minimal gauge model and qualified imports**
+- [x] **Step 3: Implement the minimal gauge model and qualified imports**
 
-Build one reusable circular face with a blue needle, instantiate it six times at the registry poses, and use package-qualified imports with the existing local fallback only for source-tree unit tests. Do not encode or publish the hidden value to production nodes.
+Create an ament resource package that installs `worlds/` and `models/` and prepends `share/siminspect_sim/models` to `GZ_SIM_RESOURCE_PATH`. Build one reusable 0.32 m face at the model origin with outward normal +X and a housing whose front remains 5 mm behind the texture, using the canonical `draw_gauge(0, 0, 100, "psi")` texture. Instantiate it six times without changing YAML poses. Expand wall centres to +/-9 m with 18 m lengths; align `tank_1`, `tank_2`, and `pipe_2` support surfaces 5 mm behind the complete housing; set the camera joint to 0.70 m relative height and horizontal FOV to 2.0 rad so the complete face remains in frame from every current candidate; preserve the detector's original 80-160 px primary search and add a 35-79 px fallback so the nominal 53 px pinhole projection is detectable without changing established large-gauge results; and use package-qualified imports with a source-tree fallback. P2 imports `QualityScorer` directly. Do not change `GaugeReader` scaling or encode/publish hidden values to production nodes.
 
-- [ ] **Step 4: Verify source and installed behavior**
+- [x] **Step 4: Verify source and installed behavior**
 
 ```bash
-python3 -m pytest src/siminspect_sim/test/test_world_assets.py src/siminspect_viewpoint_planner/test/test_installed_imports.py -q
+python3 -m pytest src/siminspect_sim/test/test_world_assets.py src/siminspect_viewpoint_planner/test/test_installed_imports.py src/siminspect_gauge_vision/test/test_gauge_detector.py::test_default_detector_preserves_large_gauge_solution -q
 source /opt/ros/jazzy/setup.bash
-colcon build --symlink-install --packages-select siminspect_sim siminspect_viewpoint_planner
+colcon build --symlink-install --packages-up-to siminspect_description siminspect_gauge_vision siminspect_sim siminspect_viewpoint_planner
+colcon test --packages-select siminspect_description siminspect_gauge_vision siminspect_sim siminspect_viewpoint_planner
+colcon test-result --verbose
 source install/setup.bash
-python3 -c "import siminspect_viewpoint_planner.candidate_generator, siminspect_viewpoint_planner.p2_selector"
+python3 -c "import siminspect_viewpoint_planner.candidate_generator, siminspect_viewpoint_planner.p1_selector, siminspect_viewpoint_planner.p2_selector"
 ```
 
 Expected: all commands PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
-git add src/siminspect_sim src/siminspect_viewpoint_planner
+git add docs/superpowers/plans/2026-08-13-02-demo-evidence.md src/siminspect_sim src/siminspect_description/urdf src/siminspect_gauge_vision/siminspect_gauge_vision/gauge_detector.py src/siminspect_gauge_vision/test/test_gauge_detector.py src/siminspect_viewpoint_planner
 git commit -m "feat: add inspectable gauge world assets"
 ```
 

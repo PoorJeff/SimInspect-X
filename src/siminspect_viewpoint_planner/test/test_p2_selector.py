@@ -147,8 +147,7 @@ def _state(asset_id="test", request_id=1, state="SELECT_VIEWPOINT"):
 
 def _make_p2():
     sel = P2Selector.__new__(P2Selector)
-    sel.p1 = p2_selector.P1Selector.__new__(p2_selector.P1Selector)
-    sel.p1.scorer = quality_scorer.QualityScorer()
+    sel.scorer = quality_scorer.QualityScorer()
     sel.assets = {}
     sel.enable_reinspect = True
     sel._published_requests = set()

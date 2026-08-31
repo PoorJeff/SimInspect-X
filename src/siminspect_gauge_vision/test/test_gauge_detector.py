@@ -12,6 +12,22 @@ def test_detect_shape():
     roi, (cx, cy), r, ok = d.detect(img)
     assert roi is not None and r > 0
 
+
+def test_default_detector_preserves_large_gauge_solution():
+    image_path = os.path.join(DS, "images", "test_0026.png")
+    if not os.path.isfile(image_path):
+        pytest.skip("reference large-gauge image not found")
+    img = cv2.imread(image_path)
+    assert img is not None
+
+    _, default_center, default_radius, default_ok = GaugeDetector().detect(img)
+    _, large_center, large_radius, large_ok = GaugeDetector(
+        min_r=80, max_r=160).detect(img)
+
+    assert large_ok
+    assert (default_ok, default_center, default_radius) == (
+        large_ok, large_center, large_radius)
+
 @pytest.mark.parametrize("i", range(20))
 def test_detect_test_images(i):
     if not os.path.isdir(DS): pytest.skip("dataset not found")
