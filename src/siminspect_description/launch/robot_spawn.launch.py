@@ -10,6 +10,7 @@ def generate_launch_description():
     pkg = "siminspect_description"
     use_sim_time = LaunchConfiguration("use_sim_time", default="true")
     world = LaunchConfiguration("world", default="empty.sdf")
+    publish_ground_truth = LaunchConfiguration("publish_ground_truth")
 
     robot_desc = Command([
         FindExecutable(name="xacro"), " ",
@@ -33,7 +34,7 @@ def generate_launch_description():
         "/camera/image_raw@sensor_msgs/msg/Image@gz.msgs.Image",
         "/camera/camera_info@sensor_msgs/msg/CameraInfo@gz.msgs.CameraInfo",
         "/wheel/odometry@nav_msgs/msg/Odometry@gz.msgs.Odometry",
-        "/model/siminspect_amr/pose@nav_msgs/msg/Odometry@gz.msgs.Pose",
+        "/pose/info@tf2_msgs/msg/TFMessage[gz.msgs.Pose_V",
     ]
 
     gz_bridge = Node(package="ros_gz_bridge", executable="parameter_bridge",
@@ -42,10 +43,17 @@ def generate_launch_description():
         remappings=[("/camera/image_raw", "/camera/image_raw"),
                     ("/camera/camera_info", "/camera/camera_info")])
 
-    gt_pub = Node(package="siminspect_benchmark", executable="ground_truth_publisher.py", name="ground_truth_publisher", parameters=[{"use_sim_time": use_sim_time}])
+    gt_pub = Node(
+        package="siminspect_benchmark",
+        executable="ground_truth_publisher.py",
+        name="ground_truth_publisher",
+        parameters=[{"use_sim_time": use_sim_time}],
+        condition=IfCondition(publish_ground_truth),
+    )
     return LaunchDescription([
         DeclareLaunchArgument("use_sim_time", default_value="true"),
         DeclareLaunchArgument("gui", default_value="false"),
         DeclareLaunchArgument("world", default_value="empty.sdf"),
+        DeclareLaunchArgument("publish_ground_truth", default_value="false"),
         gz_server, gz_gui, rsp, gz_bridge, gz_spawn, gt_pub,
     ])

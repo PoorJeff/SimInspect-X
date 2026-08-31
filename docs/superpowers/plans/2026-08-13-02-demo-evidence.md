@@ -200,11 +200,11 @@ git commit -m "feat: add inspectable gauge world assets"
 - Consumes: locked `DemoConfig` contract and executable names from Tasks 1-2.
 - Produces: `load_demo_config(Path) -> DemoConfig` and `build_component_graph(...) -> tuple[ProcessSpec, ...]`.
 
-- [ ] **Step 1: Write failing config/graph tests**
+- [x] **Step 1: Write failing config/graph tests**
 
 Test invalid mode, seed outside both the development pool 21-25 and the final pool 1-10, fewer than five or duplicate assets, unknown method/scenario/controller, non-existent world, and `record=True` with headless mode. Assert headless and visual graphs have byte-identical autonomy process specs; visual adds only Gazebo GUI, RViz, and optional recorder. Assert method, scenario, seed, controller, run ID/report path, and all six assets appear in node arguments. Assert B0 and P2 graphs differ only in the selector process. Assert `robot_spawn.launch.py` defaults `publish_ground_truth` to false and benchmark mode alone adds the benchmark publisher/recorder. Replace the invalid `/model/siminspect_amr/pose@nav_msgs/msg/Odometry@gz.msgs.Pose` bridge with a Gazebo PosePublisher configured for `use_pose_vector_msg=true` plus a one-way `tf2_msgs/msg/TFMessage` bridge; make the benchmark publisher extract only the `siminspect_amr` transform into `/benchmark_ground_truth/robot_pose`. Direct public demo use defaults to seed 21; Plan 03 may pass final seeds 1-10 through the same validated path.
 
-- [ ] **Step 2: Verify failure**
+- [x] **Step 2: Verify failure**
 
 ```bash
 python3 -m pytest src/siminspect_bringup/test/test_demo_config.py src/siminspect_bringup/test/test_component_graph.py -q
@@ -212,15 +212,15 @@ python3 -m pytest src/siminspect_bringup/test/test_demo_config.py src/siminspect
 
 Expected: FAIL because the package and APIs do not exist.
 
-- [ ] **Step 3: Implement config and graph**
+- [x] **Step 3: Implement config and graph**
 
 Use frozen dataclasses, reject unknown YAML keys, resolve repository-relative paths after validation, and create explicit `ProcessSpec(name, argv, log_path, env)` instances. Start EKF only once. Use SLAM mapping consistently for this demo rather than simultaneously launching localization with a missing saved map.
 
-- [ ] **Step 4: Verify tests**
+- [x] **Step 4: Verify tests**
 
 Run the Step 2 command. Expected: PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add config/demo_config.yaml src/siminspect_bringup

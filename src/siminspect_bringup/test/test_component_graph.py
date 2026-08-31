@@ -6,9 +6,11 @@ import pytest
 
 ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(ROOT / "src" / "siminspect_bringup"))
+sys.path.insert(0, str(ROOT / "src" / "siminspect_benchmark"))
 
 from siminspect_bringup.component_graph import ProcessSpec, build_component_graph
 from siminspect_bringup.demo_config import load_demo_config
+from siminspect_benchmark.ground_truth import select_robot_transform
 
 
 def graph(mode="headless", record=False, benchmark_evidence=False, config=None):
@@ -55,6 +57,12 @@ def test_autonomy_processes_include_all_run_contract_values():
         "gauge_tank_01", "gauge_tank_02", "gauge_valve_01",
     ):
         assert value in joined
+    expected_assets = [arg for arg in specs["mission"].argv
+                       if arg.startswith("expected_asset_ids:=")]
+    assert expected_assets == [
+        "expected_asset_ids:=[gauge_pipe_01,gauge_pipe_02,gauge_pump_01,"
+        "gauge_tank_01,gauge_tank_02,gauge_valve_01]"
+    ]
     assert specs["ekf"].name == "ekf"
 
 
@@ -84,6 +92,18 @@ def test_benchmark_evidence_alone_adds_ground_truth_processes():
         "benchmark_ground_truth", "benchmark_recorder"}
 
 
+def test_ground_truth_selection_excludes_all_non_robot_transforms():
+    class Transform:
+        def __init__(self, child_frame_id):
+            self.child_frame_id = child_frame_id
+
+    robot = Transform("siminspect_amr")
+    transforms = [Transform("conveyor"), robot, Transform("gauge_pipe_01")]
+
+    assert select_robot_transform(transforms) is robot
+    assert select_robot_transform([Transform("conveyor")]) is None
+
+
 def test_robot_spawn_is_benchmark_gated_and_uses_pose_vector_bridge():
     launch = (ROOT / "src" / "siminspect_description" / "launch" /
               "robot_spawn.launch.py").read_text(encoding="utf-8")
@@ -96,9 +116,9 @@ def test_robot_spawn_is_benchmark_gated_and_uses_pose_vector_bridge():
     assert 'DeclareLaunchArgument("publish_ground_truth", default_value="false")' in launch
     assert 'IfCondition(publish_ground_truth)' in launch
     assert "/model/siminspect_amr/pose@nav_msgs/msg/Odometry@gz.msgs.Pose" not in launch
-    assert "/pose/info@tf2_msgs/msg/TFMessage@gz.msgs.Pose_V" in launch
+    assert "/pose/info@tf2_msgs/msg/TFMessage[gz.msgs.Pose_V" in launch
     assert "PosePublisher" in xacro
     assert "use_pose_vector_msg" in xacro
     assert "TFMessage" in publisher
-    assert "siminspect_amr" in publisher
+    assert "select_robot_transform" in publisher
     assert "/benchmark_ground_truth/robot_pose" in publisher
