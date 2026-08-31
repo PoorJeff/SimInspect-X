@@ -25,6 +25,7 @@ def test_default_detector_preserves_large_gauge_solution():
         min_r=80, max_r=160).detect(img)
 
     assert large_ok
+    assert (large_ok, large_center, large_radius) == (True, (155, 151), 144)
     assert (default_ok, default_center, default_radius) == (
         large_ok, large_center, large_radius)
 
