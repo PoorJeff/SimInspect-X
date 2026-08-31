@@ -1,0 +1,13 @@
+.git
+.agent
+.opencode
+.opencode-memory
+build
+install
+log
+artifacts
+experiments/raw
+datasets/gauge_synthetic
+__pycache__
+*.pyc
+*.mp4

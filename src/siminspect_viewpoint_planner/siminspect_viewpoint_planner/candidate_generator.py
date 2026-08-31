@@ -1,7 +1,11 @@
 #!/usr/bin/env python3
 """Generate candidate viewpoints from /inspection/assets using 07_ASSET_AND_VIEWPOINT_MODEL algorithm."""
-import math, yaml
-from ray_caster import RayCaster
+import math
+
+try:
+    from siminspect_viewpoint_planner.ray_caster import RayCaster
+except ImportError:  # Source-tree script execution fallback.
+    from ray_caster import RayCaster
 import rclpy
 from rclpy.node import Node
 from siminspect_interfaces.msg import AssetArray, CandidateViewpoint, CandidateViewpointArray

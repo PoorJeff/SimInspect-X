@@ -3,21 +3,58 @@
 import math
 import rclpy
 from rclpy.node import Node
+from rclpy.qos import QoSProfile, ReliabilityPolicy, DurabilityPolicy
 from geometry_msgs.msg import PoseStamped
-from siminspect_interfaces.msg import AssetArray
+from siminspect_interfaces.msg import AssetArray, MissionState
+
+MISSION_STATE_QOS = QoSProfile(
+    depth=1,
+    reliability=ReliabilityPolicy.RELIABLE,
+    durability=DurabilityPolicy.TRANSIENT_LOCAL,
+)
 
 class B0Selector(Node):
     def __init__(self):
         super().__init__("b0_selector")
         self.pub = self.create_publisher(PoseStamped, "/inspection/selected_viewpoint", 10)
-        self.sub = self.create_subscription(AssetArray, "/inspection/assets", self.on_assets, 10)
+        self.asset_sub = self.create_subscription(
+            AssetArray, "/inspection/assets", self.on_assets, 10)
+        self.state_sub = self.create_subscription(
+            MissionState, "/inspection/mission_state",
+            self.on_mission_state, MISSION_STATE_QOS)
+        self.assets = {}
+        self._published_requests = set()
+        self._pending_request = None
 
     def on_assets(self, msg: AssetArray):
         for asset in msg.assets:
-            v = self.select_b0(asset)
-            if v is not None:
-                self.pub.publish(v)
-                self.get_logger().info(f"B0 selected for {asset.id}")
+            self.assets[asset.id] = asset
+        self._try_publish_pending()
+
+    def on_mission_state(self, msg: MissionState):
+        if msg.state != "SELECT_VIEWPOINT" or not msg.current_asset_id:
+            self._pending_request = None
+            return
+        self._pending_request = (
+            msg.current_asset_id, int(msg.request_id), msg.timestamp)
+        self._try_publish_pending()
+
+    def _try_publish_pending(self):
+        if self._pending_request is None:
+            return
+        asset_id, request_id, request_stamp = self._pending_request
+        request_key = (asset_id, request_id)
+        if request_key in self._published_requests:
+            return
+        asset = self.assets.get(asset_id)
+        if asset is None:
+            return
+        pose = self.select_b0(asset)
+        pose.header.stamp = request_stamp
+        self._published_requests.add(request_key)
+        self.pub.publish(pose)
+        self.get_logger().info(
+            f"B0 selected for {asset_id} request {request_id}")
 
     def select_b0(self, asset):
         px, py = asset.map_pose.position.x, asset.map_pose.position.y

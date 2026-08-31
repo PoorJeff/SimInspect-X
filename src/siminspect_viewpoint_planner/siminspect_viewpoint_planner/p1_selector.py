@@ -7,7 +7,11 @@ import rclpy
 from rclpy.node import Node
 from geometry_msgs.msg import PoseStamped
 from siminspect_interfaces.msg import AssetArray
-from quality_scorer import QualityScorer
+
+try:
+    from siminspect_viewpoint_planner.quality_scorer import QualityScorer
+except ImportError:  # Source-tree script execution fallback.
+    from quality_scorer import QualityScorer
 
 class P1Selector(Node):
     def __init__(self):

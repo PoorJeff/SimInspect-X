@@ -13,7 +13,9 @@ echo ""
 
 # Source ROS 2
 if [ -f /opt/ros/jazzy/setup.bash ]; then
+    set +u
     source /opt/ros/jazzy/setup.bash
+    set -u
 else
     echo "ERROR: ROS 2 Jazzy not found at /opt/ros/jazzy/setup.bash"
     echo "Install ROS 2 Jazzy first, or use the provided Dockerfile."
@@ -23,9 +25,10 @@ fi
 # Install system dependencies via rosdep
 echo "[1/2] Installing dependencies (rosdep)..."
 if [ ! -f /etc/ros/rosdep/sources.list.d/20-default.list ]; then
-    sudo rosdep init
+    sudo -n rosdep init
 fi
 rosdep update
+sudo -n apt-get update
 rosdep install --from-paths src --ignore-src -y --rosdistro jazzy
 echo ""
 
