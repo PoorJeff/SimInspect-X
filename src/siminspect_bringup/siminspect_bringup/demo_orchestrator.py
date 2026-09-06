@@ -42,9 +42,15 @@ def _has_map_odom_transform(output: str) -> bool:
 
 def _tf2_echo_has_map_odom(output: str | bytes) -> bool:
     """Parse tf2_echo output for a resolved map -> odom transform."""
-    if isinstance(output, bytes):
-        output = output.decode(errors="replace")
+    output = _output_text(output)
     return "Translation:" in output and "Rotation:" in output
+
+
+def _output_text(output: str | bytes | None) -> str:
+    """Normalize subprocess output, including TimeoutExpired byte payloads."""
+    if isinstance(output, bytes):
+        return output.decode(errors="replace")
+    return output or ""
 
 
 def _navigation_ready(process: subprocess.Popen, timeout_s: float = 55.0) -> dict[str, object]:
@@ -73,9 +79,9 @@ def _navigation_ready(process: subprocess.Popen, timeout_s: float = 55.0) -> dic
                 timeout=3.0,
                 check=False,
             )
-            tf_output = tf.stdout
+            tf_output = _output_text(tf.stdout) + _output_text(tf.stderr)
         except subprocess.TimeoutExpired as exc:
-            tf_output = exc.stdout or ""
+            tf_output = _output_text(exc.stdout) + _output_text(exc.stderr)
         except subprocess.SubprocessError:
             tf_output = ""
         tf_ready = _tf2_echo_has_map_odom(tf_output)
