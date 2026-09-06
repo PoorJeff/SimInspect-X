@@ -47,29 +47,36 @@ def _navigation_ready(process: subprocess.Popen, timeout_s: float = 55.0) -> dic
     while time.monotonic() < deadline:
         if process.poll() is not None:
             return {"ok": False, "reason": "navigation process exited", "observed": {}}
-        map_info = subprocess.run(
+        try:
+            map_info = subprocess.run(
                 ("ros2", "topic", "info", "/map", "-v"),
                 capture_output=True,
                 text=True,
                 timeout=2.0,
                 check=False,
             )
-        map_ready = _topic_has_publisher(map_info.stdout)
-        tf = subprocess.run(
-            ("ros2", "topic", "echo", "/tf", "--once"),
-            capture_output=True,
-            text=True,
-            timeout=2.0,
-            check=False,
-        )
-        tf_ready = _has_map_odom_transform(tf.stdout)
+            map_ready = _topic_has_publisher(map_info.stdout)
+        except subprocess.SubprocessError:
+            map_ready = False
+        try:
+            tf = subprocess.run(
+                ("ros2", "topic", "echo", "/tf", "--once"),
+                capture_output=True,
+                text=True,
+                timeout=2.0,
+                check=False,
+            )
+            tf_output = tf.stdout
+        except subprocess.SubprocessError:
+            tf_output = ""
+        tf_ready = _has_map_odom_transform(tf_output)
         latest = {
             "ok": map_ready and tf_ready,
             "reason": "map publisher and map->odom TF ready" if map_ready and tf_ready else "waiting for map publisher and map->odom TF",
             "observed": {
                 "map_publisher": map_ready,
                 "map_odom_tf": tf_ready,
-                "tf_sample": tf.stdout[-400:],
+                "tf_sample": tf_output[-400:],
             },
         }
         if map_ready and tf_ready:
