@@ -1,0 +1,43 @@
+Panels:
+  - Class: rviz_common/Displays
+    Name: Displays
+  - Class: rviz_common/Views
+    Name: Views
+Visualization Manager:
+  Class: ""
+  Displays:
+    - Class: rviz_default_plugins/Grid
+      Enabled: true
+      Name: Map grid
+      Reference Frame: map
+    - Class: rviz_default_plugins/TF
+      Enabled: true
+      Name: TF
+    - Class: rviz_default_plugins/RobotModel
+      Enabled: true
+      Name: Robot
+      Robot Description: robot_description
+    - Class: rviz_default_plugins/Path
+      Enabled: true
+      Name: Nav2 path
+      Topic: /plan
+    - Class: rviz_default_plugins/MarkerArray
+      Enabled: true
+      Name: Candidate viewpoints
+      Topic: /inspection/candidate_markers
+    - Class: rviz_default_plugins/Pose
+      Enabled: true
+      Name: Selected viewpoint
+      Topic: /inspection/selected_viewpoint
+  Global Options:
+    Fixed Frame: map
+  Name: SimInspect-X
+  Tools:
+    - Class: rviz_default_plugins/Interact
+  Views:
+    Current:
+      Class: rviz_default_plugins/Orbit
+      Distance: 12
+      Focal Point: {X: 4, Y: 4, Z: 0}
+      Pitch: 0.7
+      Yaw: 0.8

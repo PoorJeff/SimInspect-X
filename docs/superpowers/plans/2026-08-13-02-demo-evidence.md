@@ -420,11 +420,11 @@ git commit -m "feat: orchestrate evidence-backed demos"
 - Consumes: formal events and `RunArtifacts` from Task 4.
 - Produces: `media/demo.mp4`, five named screenshots, `media/index.json`, and `media/recording-metadata.json` tied to the same run ID.
 
-- [ ] **Step 1: Write failing media tests**
+- [x] **Step 1: Write failing media tests**
 
 Use a generated two-second FFmpeg test source and formal event fixture. Assert MP4 probe success, required screenshot names, `source == "live_capture"`, matching run ID, dimensions/fps/timestamps, relative paths, and SHA-256 values. Assert recording never affects autonomy process specs.
 
-- [ ] **Step 2: Verify failure**
+- [x] **Step 2: Verify failure**
 
 ```bash
 python3 -m pytest src/siminspect_bringup/test/test_media_capture.py -q
@@ -432,11 +432,11 @@ python3 -m pytest src/siminspect_bringup/test/test_media_capture.py -q
 
 Expected: FAIL because capture APIs and RViz config do not exist.
 
-- [ ] **Step 3: Implement visual-only processes and capture**
+- [x] **Step 3: Implement visual-only processes and capture**
 
 Configure RViz to show TF, map, robot, Nav2 path, candidate markers, and selected viewpoint. Capture the live visual desktop to `media/demo.mp4`; select screenshots from `monotonic_s` values for navigation, viewpoint selection, gauge reading, reinspection, and mission completion. Record capture command, start/end, dimensions, fps, display, commit, and checksums.
 
-- [ ] **Step 4: Verify media outputs**
+- [x] **Step 4: Verify media outputs**
 
 ```bash
 python3 -m pytest src/siminspect_bringup/test/test_media_capture.py -q
@@ -451,7 +451,7 @@ ffprobe "$RUN_DIR/media/demo.mp4"
 
 Expected: tests and probes PASS; all media index paths resolve.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add docker/Dockerfile src/siminspect_bringup
