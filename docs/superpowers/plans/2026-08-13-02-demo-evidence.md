@@ -240,11 +240,11 @@ git commit -m "feat: define unified demo component graph"
 - Consumes: locked schemas above and Mission report schema v1.1 from Task 1.
 - Produces: `RunArtifacts.create(...)`, `append_event(...)`, `write_json_atomic(...)`, `finalize_manifest(...)`, `validate_mission_report(...)`, and `evaluate_run(...)`.
 
-- [ ] **Step 1: Write failing artifact/acceptance tests**
+- [x] **Step 1: Write failing artifact/acceptance tests**
 
 Test run-ID regex; refusal to reuse a directory; atomic JSON writes; relative evidence paths; one-line valid JSON events; failed-run preservation; SHA-256 verification; manifest exclusion from its own checksum set; exact six-asset semantics; at least one successful camera reading; bounded attempts; strict return-home evidence; and overall failure if any required gate fails.
 
-- [ ] **Step 2: Verify failure**
+- [x] **Step 2: Verify failure**
 
 ```bash
 python3 -m pytest src/siminspect_bringup/test/test_run_artifacts.py src/siminspect_bringup/test/test_acceptance.py -q
@@ -252,15 +252,15 @@ python3 -m pytest src/siminspect_bringup/test/test_run_artifacts.py src/siminspe
 
 Expected: FAIL because artifact and evaluator APIs do not exist.
 
-- [ ] **Step 3: Implement immutable run output**
+- [x] **Step 3: Implement immutable run output**
 
 Create the approved directory layout, copy validated config, record full commit SHA/dirty state/container image/ROS/Gazebo versions, stream events with wall and monotonic time, and finalize checksums only after logs/media/report/acceptance exist. Write JSON through same-directory temporary files followed by `os.replace`.
 
-- [ ] **Step 4: Verify tests**
+- [x] **Step 4: Verify tests**
 
 Run the Step 2 command. Expected: PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add .gitignore src/siminspect_bringup
