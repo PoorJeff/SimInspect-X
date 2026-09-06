@@ -45,6 +45,10 @@ def test_visual_adds_only_presentation_processes():
     assert tuple(spec for spec in visual if spec.name in headless_by_name) == headless
     assert set(visual_by_name) - set(headless_by_name) == {
         "gazebo_gui", "rviz", "recorder"}
+    assert visual_by_name["recorder"].argv == (
+        "python3", "-m", "siminspect_bringup.media_capture",
+        "--run-dir", str(ROOT / "artifacts" / "runs" / "unit-run"),
+    )
 
 
 def test_autonomy_processes_include_all_run_contract_values():
@@ -64,6 +68,13 @@ def test_autonomy_processes_include_all_run_contract_values():
         "gauge_tank_01,gauge_tank_02,gauge_valve_01]"
     ]
     assert specs["ekf"].name == "ekf"
+    assert {
+        "asset_registry", "candidate_generator", "vision", "selector",
+        "precision_controller", "fault_injector", "mission",
+    } <= set(specs)
+    assert "include_ekf:=false" in specs["slam"].argv
+    assert "navigation_launch.py" in specs["navigation"].argv
+    assert "publish_ground_truth:=false" in specs["simulation"].argv
 
 
 def test_b0_and_p2_differ_only_by_selector_process(tmp_path):
@@ -90,6 +101,10 @@ def test_benchmark_evidence_alone_adds_ground_truth_processes():
     assert "benchmark_recorder" not in production
     assert set(benchmark) - set(production) == {
         "benchmark_ground_truth", "benchmark_recorder"}
+    assert benchmark["simulation"] == production["simulation"]
+    assert benchmark["mission"] == production["mission"]
+    assert benchmark["benchmark_recorder"].argv[:4] == (
+        "ros2", "run", "siminspect_benchmark", "e4_evidence_recorder.py")
 
 
 def test_ground_truth_selection_excludes_all_non_robot_transforms():
@@ -117,8 +132,11 @@ def test_robot_spawn_is_benchmark_gated_and_uses_pose_vector_bridge():
     assert 'IfCondition(publish_ground_truth)' in launch
     assert "/model/siminspect_amr/pose@nav_msgs/msg/Odometry@gz.msgs.Pose" not in launch
     assert "/pose/info@tf2_msgs/msg/TFMessage[gz.msgs.Pose_V" in launch
+    assert "/clock@rosgraph_msgs/msg/Clock[gz.msgs.Clock" in launch
+    assert "/cmd_vel@geometry_msgs/msg/Twist]gz.msgs.Twist" in launch
     assert "PosePublisher" in xacro
     assert "use_pose_vector_msg" in xacro
+    assert "<topic>/pose/info</topic>" in xacro
     assert "TFMessage" in publisher
     assert "select_robot_transform" in publisher
     assert "/benchmark_ground_truth/robot_pose" in publisher
