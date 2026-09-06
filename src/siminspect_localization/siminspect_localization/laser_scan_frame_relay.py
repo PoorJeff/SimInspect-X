@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import copy
+
 import rclpy
 from rclpy.node import Node
 from sensor_msgs.msg import LaserScan
@@ -10,7 +12,7 @@ from sensor_msgs.msg import LaserScan
 def normalize_scan_frame(message: LaserScan, frame_id: str = "laser_link") -> LaserScan:
     """Return a copy whose frame is present in robot_state_publisher's TF tree."""
     normalized = LaserScan()
-    normalized.header = message.header
+    normalized.header = copy.deepcopy(message.header)
     normalized.header.frame_id = frame_id
     normalized.angle_min = message.angle_min
     normalized.angle_max = message.angle_max

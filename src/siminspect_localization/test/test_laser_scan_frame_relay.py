@@ -13,7 +13,8 @@ def test_normalize_scan_frame_preserves_scan_payload_and_rewrites_frame():
     normalized = normalize_scan_frame(message)
 
     assert normalized is not message
+    assert message.header.frame_id == "siminspect_amr/base_link/laser_sensor"
     assert normalized.header.frame_id == "laser_link"
     assert normalized.angle_min == -1.0
-    assert normalized.ranges == [1.0, 2.0]
-    assert normalized.intensities == [3.0, 4.0]
+    assert list(normalized.ranges) == [1.0, 2.0]
+    assert list(normalized.intensities) == [3.0, 4.0]
