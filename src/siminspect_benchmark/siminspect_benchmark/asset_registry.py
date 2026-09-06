@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env python3
+#!/usr/bin/env python3
 """Asset registry: loads gauge YAML files and publishes /inspection/assets."""
 import os, yaml, math
 import rclpy

@@ -1,4 +1,4 @@
-﻿"""Validate EKF YAML config structure and topic/TF mappings."""
+"""Validate EKF YAML config structure and topic/TF mappings."""
 import os, yaml, pytest
 CFG = os.path.join(os.path.dirname(__file__), '..', 'config', 'ekf.yaml')
 def test_yaml_valid():

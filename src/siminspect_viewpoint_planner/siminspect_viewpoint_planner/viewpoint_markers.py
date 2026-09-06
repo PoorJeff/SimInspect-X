@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env python3
+#!/usr/bin/env python3
 """Publish RViz Marker arrows for candidate viewpoints. Green=visible, Red=blocked."""
 import math
 from builtin_interfaces.msg import Duration
