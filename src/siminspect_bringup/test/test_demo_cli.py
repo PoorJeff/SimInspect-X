@@ -10,6 +10,7 @@ sys.path.insert(0, str(ROOT / "src" / "siminspect_bringup"))
 from siminspect_bringup.demo_orchestrator import (  # noqa: E402
     _git_metadata,
     _has_map_odom_transform,
+    _tf2_echo_has_map_odom,
     _topic_has_publisher,
     build_parser,
     config_with_overrides,
@@ -53,3 +54,5 @@ def test_navigation_readiness_parsers_require_map_publisher_and_tf_edge():
     assert not _topic_has_publisher("Publisher count: 0")
     assert _has_map_odom_transform("frame_id: map\nchild_frame_id: odom\n")
     assert not _has_map_odom_transform("frame_id: odom\nchild_frame_id: base_link\n")
+    assert _tf2_echo_has_map_odom("Translation: [0.0, 0.0, 0.0]\nRotation: in Quaternion")
+    assert not _tf2_echo_has_map_odom("Waiting for transform map -> odom")

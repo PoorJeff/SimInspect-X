@@ -40,6 +40,13 @@ def _has_map_odom_transform(output: str) -> bool:
     return "frame_id: map" in output and "child_frame_id: odom" in output
 
 
+def _tf2_echo_has_map_odom(output: str | bytes) -> bool:
+    """Parse tf2_echo output for a resolved map -> odom transform."""
+    if isinstance(output, bytes):
+        output = output.decode(errors="replace")
+    return "Translation:" in output and "Rotation:" in output
+
+
 def _navigation_ready(process: subprocess.Popen, timeout_s: float = 55.0) -> dict[str, object]:
     """Wait for the map publisher and map->odom TF before starting mission goals."""
     deadline = time.monotonic() + max(1.0, timeout_s)
@@ -60,16 +67,18 @@ def _navigation_ready(process: subprocess.Popen, timeout_s: float = 55.0) -> dic
             map_ready = False
         try:
             tf = subprocess.run(
-                ("ros2", "topic", "echo", "/tf", "--once"),
+                ("ros2", "run", "tf2_ros", "tf2_echo", "map", "odom"),
                 capture_output=True,
                 text=True,
-                timeout=2.0,
+                timeout=3.0,
                 check=False,
             )
             tf_output = tf.stdout
+        except subprocess.TimeoutExpired as exc:
+            tf_output = exc.stdout or ""
         except subprocess.SubprocessError:
             tf_output = ""
-        tf_ready = _has_map_odom_transform(tf_output)
+        tf_ready = _tf2_echo_has_map_odom(tf_output)
         latest = {
             "ok": map_ready and tf_ready,
             "reason": "map publisher and map->odom TF ready" if map_ready and tf_ready else "waiting for map publisher and map->odom TF",
