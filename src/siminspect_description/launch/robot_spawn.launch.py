@@ -4,6 +4,7 @@ from launch.actions import DeclareLaunchArgument, ExecuteProcess
 from launch.conditions import IfCondition
 from launch.substitutions import Command, FindExecutable, LaunchConfiguration, PathJoinSubstitution
 from launch_ros.actions import Node
+from launch_ros.parameter_descriptions import ParameterValue
 from launch_ros.substitutions import FindPackageShare
 
 def generate_launch_description():
@@ -18,7 +19,8 @@ def generate_launch_description():
     ])
 
     rsp = Node(package="robot_state_publisher", executable="robot_state_publisher",
-        parameters=[{"robot_description": robot_desc, "use_sim_time": use_sim_time}])
+        parameters=[{"robot_description": ParameterValue(robot_desc, value_type=str),
+                     "use_sim_time": use_sim_time}])
 
     gz_spawn = Node(package="ros_gz_sim", executable="create",
         arguments=["-name", "siminspect_amr", "-topic", "robot_description", "-x", "0.0", "-y", "0.0", "-z", "0.12", "-Y", "0.0"])
