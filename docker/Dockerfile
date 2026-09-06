@@ -31,6 +31,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && apt-get update && apt-get install -y --no-install-recommends \
     ros-jazzy-desktop \
     ros-jazzy-ros-gz \
+    ros-jazzy-cv-bridge \
     ros-jazzy-gz-ros2-control \
     ros-jazzy-navigation2 \
     ros-jazzy-nav2-bringup \

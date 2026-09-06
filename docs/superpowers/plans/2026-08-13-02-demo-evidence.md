@@ -373,11 +373,11 @@ git commit -m "feat: actuate F06 and F07 faults"
 - Consumes: Tasks 3-6 contracts.
 - Produces: CLI exit code `0` only for accepted runs, printed `RUN_ID=$RUN_ID` and `RUN_DIR=$RUN_DIR`, and one finalized artifact tree on every exit path.
 
-- [ ] **Step 1: Write failing CLI tests**
+- [x] **Step 1: Write failing CLI tests**
 
 Test the three documented invocations plus the benchmark overrides `--method B0|P2`, `--scenario F00|F06|F07`, `--seed 1-10|21-25`, `--artifact-root PATH`, and internal `--benchmark-evidence`; reject `--record` without `--visual`, no TTY in headless Docker, repository-root Docker context, `--init`, `--shm-size=2g`, argument forwarding, stale root-level report immunity, non-zero readiness/mission failures, signal cleanup, and finalization of failed runs. Assert the benchmark publisher/recorder are absent without `--benchmark-evidence` and are the only added processes when it is present.
 
-- [ ] **Step 2: Verify failure**
+- [x] **Step 2: Verify failure**
 
 ```bash
 python3 -m pytest src/siminspect_bringup/test/test_demo_cli.py -q
@@ -386,11 +386,11 @@ bash -n run_demo.sh
 
 Expected: pytest FAIL because the orchestrator and flags do not exist; Bash syntax passes.
 
-- [ ] **Step 3: Implement orchestration**
+- [x] **Step 3: Implement orchestration**
 
 Make the shell script build with `docker build -f docker/Dockerfile .` and execute the installed Python module. The orchestrator creates artifacts before launching, installs signal handlers, starts each dependency only after its predecessor probe passes, monitors unexpected exits, waits for the current run's report, evaluates acceptance, cleans all owned processes, writes the final event/manifest, and returns the acceptance result.
 
-- [ ] **Step 4: Verify CLI behavior**
+- [x] **Step 4: Verify CLI behavior**
 
 ```bash
 python3 -m pytest src/siminspect_bringup/test/test_demo_cli.py -q
@@ -400,7 +400,7 @@ bash -n run_demo.sh
 
 Expected: PASS; help leads with the three public invocations and separately labels the four benchmark/reproducibility overrides.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add run_demo.sh docker/Dockerfile src/siminspect_bringup

@@ -14,6 +14,7 @@ if(BUILD_TESTING)
   ament_add_pytest_test(test_acceptance test/test_acceptance.py)
   ament_add_pytest_test(test_readiness test/test_readiness.py)
   ament_add_pytest_test(test_process_supervisor test/test_process_supervisor.py)
+  ament_add_pytest_test(test_demo_cli test/test_demo_cli.py)
 endif()
 
 ament_package()

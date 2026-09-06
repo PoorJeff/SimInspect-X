@@ -31,7 +31,7 @@ def build_component_graph(
     env = (("ROS_LOG_DIR", str(run_dir / "ros_logs")),)
 
     def process(name: str, *argv: str) -> ProcessSpec:
-        return ProcessSpec(name, tuple(argv), run_dir / f"{name}.log", env)
+        return ProcessSpec(name, tuple(argv), run_dir / "logs" / f"{name}.log", env)
 
     assets = f"expected_asset_ids:=[{','.join(config.mission_assets)}]"
     launch_use_sim_time = "use_sim_time:=true"
