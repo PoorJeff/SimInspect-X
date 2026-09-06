@@ -40,44 +40,42 @@ def _has_map_odom_transform(output: str) -> bool:
     return "frame_id: map" in output and "child_frame_id: odom" in output
 
 
-def _navigation_ready(process: subprocess.Popen) -> dict[str, object]:
+def _navigation_ready(process: subprocess.Popen, timeout_s: float = 55.0) -> dict[str, object]:
     """Wait for the map publisher and map->odom TF before starting mission goals."""
-    if process.poll() is not None:
-        return {"ok": False, "reason": "navigation process exited", "observed": {}}
-    try:
+    deadline = time.monotonic() + max(1.0, timeout_s)
+    latest: dict[str, object] = {"ok": False, "reason": "waiting for map publisher and map->odom TF", "observed": {}}
+    while time.monotonic() < deadline:
+        if process.poll() is not None:
+            return {"ok": False, "reason": "navigation process exited", "observed": {}}
         map_info = subprocess.run(
-            ("ros2", "topic", "info", "/map", "-v"),
-            capture_output=True,
-            text=True,
-            timeout=2.0,
-            check=False,
-        )
-        map_ready = _topic_has_publisher(map_info.stdout)
-        tf_ready = False
-        tf_output = ""
-        for _ in range(3):
-            tf = subprocess.run(
-                ("ros2", "topic", "echo", "/tf", "--once"),
+                ("ros2", "topic", "info", "/map", "-v"),
                 capture_output=True,
                 text=True,
                 timeout=2.0,
                 check=False,
             )
-            tf_output = tf.stdout
-            if _has_map_odom_transform(tf.stdout):
-                tf_ready = True
-                break
-        return {
+        map_ready = _topic_has_publisher(map_info.stdout)
+        tf = subprocess.run(
+            ("ros2", "topic", "echo", "/tf", "--once"),
+            capture_output=True,
+            text=True,
+            timeout=2.0,
+            check=False,
+        )
+        tf_ready = _has_map_odom_transform(tf.stdout)
+        latest = {
             "ok": map_ready and tf_ready,
             "reason": "map publisher and map->odom TF ready" if map_ready and tf_ready else "waiting for map publisher and map->odom TF",
             "observed": {
                 "map_publisher": map_ready,
                 "map_odom_tf": tf_ready,
-                "tf_sample": tf_output[-400:],
+                "tf_sample": tf.stdout[-400:],
             },
         }
-    except (OSError, subprocess.SubprocessError) as exc:
-        return {"ok": False, "reason": repr(exc), "observed": {}}
+        if map_ready and tf_ready:
+            return latest
+        time.sleep(0.5)
+    return latest
 
 
 class DemoArgumentParser(argparse.ArgumentParser):
@@ -199,7 +197,7 @@ def run(args: argparse.Namespace) -> int:
                 if spec.name == "navigation":
                     probe = ReadinessProbe(
                         "navigation_ready",
-                        lambda process=process: _navigation_ready(process),
+                        lambda process=process, timeout_s=config.readiness_timeout_s: _navigation_ready(process, timeout_s - 5.0),
                         expected="/map publisher and map -> odom TF",
                         component=spec.name,
                         log_path=str(spec.log_path.relative_to(artifacts.run_dir).as_posix()),
@@ -212,7 +210,8 @@ def run(args: argparse.Namespace) -> int:
                         component=spec.name,
                         log_path=str(spec.log_path.relative_to(artifacts.run_dir).as_posix()),
                     )
-                result = run_readiness_probe(probe, min(config.readiness_timeout_s, 5.0))
+                probe_timeout = config.readiness_timeout_s if spec.name == "navigation" else min(config.readiness_timeout_s, 5.0)
+                result = run_readiness_probe(probe, probe_timeout)
                 artifacts.append_event("readiness.completed", component=spec.name, status=result.status, details={"reason": result.reason, "observed": dict(result.observed), "evidence": list(result.evidence)})
                 if result.status != "passed":
                     raise RuntimeError(result.reason)
