@@ -6,7 +6,7 @@ from pathlib import Path
 import yaml
 
 ROOT = Path(__file__).resolve().parents[3]
-sys.path.insert(0, str(ROOT / "src" / "siminspect_benchmark"))
+sys.path.insert(0, str(ROOT / "src" / "siminspect_benchmark" / "siminspect_benchmark"))
 sys.path.insert(0, str(ROOT / "src" / "siminspect_bringup"))
 
 from fault_injector import (  # noqa: E402
