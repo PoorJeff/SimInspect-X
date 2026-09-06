@@ -2,6 +2,10 @@
 <sdf version="1.10">
 <world name="plant">
 
+  <plugin filename="gz-sim-physics-system" name="gz::sim::systems::Physics"/>
+  <plugin filename="gz-sim-user-commands-system" name="gz::sim::systems::UserCommands"/>
+  <plugin filename="gz-sim-scene-broadcaster-system" name="gz::sim::systems::SceneBroadcaster"/>
+
   <!-- Gazebo Sensors and IMU systems are explicit so CPU/headless runs still
        produce LiDAR, camera, and IMU samples for SLAM and acceptance checks. -->
   <plugin filename="gz-sim-sensors-system" name="gz::sim::systems::Sensors">
