@@ -73,7 +73,9 @@ def test_autonomy_processes_include_all_run_contract_values():
         "precision_controller", "fault_injector", "mission",
     } <= set(specs)
     assert "include_ekf:=false" in specs["slam"].argv
-    assert "navigation_launch.py" in specs["navigation"].argv
+    navigation_launch = (ROOT / "src" / "siminspect_navigation" / "launch" /
+                         "navigation.launch.py").read_text(encoding="utf-8")
+    assert "/launch/navigation_launch.py" in navigation_launch
     assert "publish_ground_truth:=false" in specs["simulation"].argv
 
 

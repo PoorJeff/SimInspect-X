@@ -1,4 +1,5 @@
 from pathlib import Path
+import shutil
 import sys
 
 import pytest
@@ -72,3 +73,23 @@ def test_rejects_unknown_keys_and_missing_world(tmp_path):
         load_demo_config(write_config(tmp_path, unexpected=True))
     with pytest.raises(ValueError, match="world"):
         load_demo_config(write_config(tmp_path, world="src/nope.sdf"))
+
+
+def test_resolves_world_relative_to_copied_repository(tmp_path):
+    repo = tmp_path / "repo"
+    shutil.copytree(ROOT / "src" / "siminspect_sim", repo / "src" / "siminspect_sim")
+    config_dir = repo / "config"
+    config_dir.mkdir()
+    config = config_dir / "demo_config.yaml"
+    config.write_text(CONFIG.read_text(encoding="utf-8"), encoding="utf-8")
+
+    loaded = load_demo_config(config)
+    assert loaded.world == (
+        repo / "src" / "siminspect_sim" / "worlds" / "plant.sdf"
+    ).resolve()
+
+
+def test_rejects_nonfinite_timeout(tmp_path):
+    config = write_config(tmp_path, readiness_timeout_s=float("nan"))
+    with pytest.raises(ValueError, match="readiness_timeout_s"):
+        load_demo_config(config)

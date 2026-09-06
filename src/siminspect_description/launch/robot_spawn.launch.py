@@ -34,6 +34,8 @@ def generate_launch_description():
         "/camera/image_raw@sensor_msgs/msg/Image@gz.msgs.Image",
         "/camera/camera_info@sensor_msgs/msg/CameraInfo@gz.msgs.CameraInfo",
         "/wheel/odometry@nav_msgs/msg/Odometry@gz.msgs.Odometry",
+        "/clock@rosgraph_msgs/msg/Clock[gz.msgs.Clock",
+        "/cmd_vel@geometry_msgs/msg/Twist]gz.msgs.Twist",
         "/pose/info@tf2_msgs/msg/TFMessage[gz.msgs.Pose_V",
     ]
 

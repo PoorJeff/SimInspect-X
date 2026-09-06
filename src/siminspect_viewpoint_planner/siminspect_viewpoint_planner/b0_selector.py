@@ -16,6 +16,7 @@ MISSION_STATE_QOS = QoSProfile(
 class B0Selector(Node):
     def __init__(self):
         super().__init__("b0_selector")
+        self.declare_parameter("method", "B0")
         self.pub = self.create_publisher(PoseStamped, "/inspection/selected_viewpoint", 10)
         self.asset_sub = self.create_subscription(
             AssetArray, "/inspection/assets", self.on_assets, 10)

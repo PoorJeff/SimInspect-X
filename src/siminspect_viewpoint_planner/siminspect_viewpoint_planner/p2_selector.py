@@ -23,6 +23,7 @@ MISSION_STATE_QOS = QoSProfile(
 class P2Selector(Node):
     def __init__(self):
         super().__init__("p2_selector")
+        self.declare_parameter("method", "P2")
         self.pub = self.create_publisher(PoseStamped, "/inspection/selected_viewpoint", 10)
         self.asset_sub = self.create_subscription(AssetArray, "/inspection/assets", self.on_assets, 10)
         self.state_sub = self.create_subscription(

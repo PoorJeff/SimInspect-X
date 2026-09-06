@@ -1,5 +1,6 @@
 """Validated configuration for the reproducible SimInspect-X demo."""
 from dataclasses import dataclass
+import math
 from pathlib import Path
 from typing import Final
 
@@ -39,9 +40,19 @@ def _require_choice(data: dict, key: str, choices: frozenset[str]) -> str:
 
 def _positive_number(data: dict, key: str) -> float:
     value = data.get(key)
-    if isinstance(value, bool) or not isinstance(value, (int, float)) or value <= 0:
+    if (isinstance(value, bool) or not isinstance(value, (int, float)) or
+            not math.isfinite(value) or value <= 0):
         raise ValueError(f"{key} must be a positive number")
     return float(value)
+
+
+def _repository_root(config_path: Path) -> Path:
+    """Find the checkout root so copied configs resolve their own world."""
+    config_path = config_path.resolve()
+    for parent in (config_path.parent, *config_path.parents):
+        if (parent / "src" / "siminspect_sim" / "worlds" / "plant.sdf").is_file():
+            return parent
+    return _REPOSITORY_ROOT
 
 
 def load_demo_config(path: Path) -> DemoConfig:
@@ -83,7 +94,7 @@ def load_demo_config(path: Path) -> DemoConfig:
     readiness_timeout_s = _positive_number(data, "readiness_timeout_s")
     mission_timeout_s = _positive_number(data, "mission_timeout_s")
 
-    world = (_REPOSITORY_ROOT / world_candidate).resolve()
+    world = (_repository_root(Path(path)) / world_candidate).resolve()
     if not world.is_file():
         raise ValueError(f"world does not exist: {world_value}")
 

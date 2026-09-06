@@ -33,14 +33,24 @@ def build_component_graph(
     def process(name: str, *argv: str) -> ProcessSpec:
         return ProcessSpec(name, tuple(argv), run_dir / f"{name}.log", env)
 
-    assets = (f"expected_asset_ids:=[{','.join(config.mission_assets)}]",)
+    assets = f"expected_asset_ids:=[{','.join(config.mission_assets)}]"
+    launch_use_sim_time = "use_sim_time:=true"
     autonomy = (
         process("simulation", "ros2", "launch", "siminspect_description",
                 "robot_spawn.launch.py", f"world:={config.world}", "gui:=false",
-                f"publish_ground_truth:={'true' if benchmark_evidence else 'false'}"),
-        process("ekf", "ros2", "launch", "siminspect_localization", "ekf.launch.py"),
-        process("slam", "ros2", "launch", "siminspect_localization", "slam.launch.py"),
-        process("navigation", "ros2", "launch", "siminspect_navigation", "navigation.launch.py"),
+                "publish_ground_truth:=false", launch_use_sim_time),
+        process("ekf", "ros2", "launch", "siminspect_localization", "ekf.launch.py",
+                launch_use_sim_time),
+        process("slam", "ros2", "launch", "siminspect_localization", "slam.launch.py",
+                "include_ekf:=false", launch_use_sim_time),
+        process("navigation", "ros2", "launch", "siminspect_navigation",
+                "navigation.launch.py", launch_use_sim_time),
+        process("asset_registry", "ros2", "run", "siminspect_benchmark",
+                "asset_registry.py"),
+        process("candidate_generator", "ros2", "run", "siminspect_viewpoint_planner",
+                "candidate_generator.py"),
+        process("vision", "ros2", "run", "siminspect_gauge_vision",
+                "gauge_vision_node.py"),
         process("selector", "ros2", "run", "siminspect_viewpoint_planner",
                 "b0_selector.py" if config.method == "B0" else "p2_selector.py",
                 "--ros-args", "-p", f"method:={config.method}"),
@@ -54,16 +64,16 @@ def build_component_graph(
                 "--ros-args", "-p", f"ordering:={config.ordering}", "-p",
                 f"run_id:={run_id}", "-p",
                 f"report_path:={run_dir / 'mission_report.json'}", "-p",
-                f"readiness_timeout_s:={config.readiness_timeout_s}", "-p",
-                f"mission_timeout_s:={config.mission_timeout_s}", "-p", *assets),
+                assets),
     )
     specs = autonomy
     if benchmark_evidence:
         specs += (
             process("benchmark_ground_truth", "ros2", "run", "siminspect_benchmark",
                     "ground_truth_publisher.py"),
-            process("benchmark_recorder", "ros2", "bag", "record", "-o",
-                    str(run_dir / "benchmark"), "/benchmark_ground_truth/robot_pose"),
+            process("benchmark_recorder", "ros2", "run", "siminspect_benchmark",
+                    "e4_evidence_recorder.py", "--run-id", run_id,
+                    "--output", str(run_dir / "benchmark_evaluation.json")),
         )
     if mode == "visual":
         specs += (
@@ -71,6 +81,7 @@ def build_component_graph(
             process("rviz", "rviz2"),
         )
         if record:
-            specs += (process("recorder", "ros2", "bag", "record", "-a", "-o",
-                              str(run_dir / "visual_recording")),)
+            specs += (process("recorder", "python3", "-m",
+                              "siminspect_bringup.media_capture", "--run-dir",
+                              str(run_dir)),)
     return specs
