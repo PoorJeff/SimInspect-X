@@ -25,7 +25,11 @@ def generate_launch_description():
     gz_spawn = Node(package="ros_gz_sim", executable="create",
         arguments=["-name", "siminspect_amr", "-topic", "robot_description", "-x", "0.0", "-y", "0.0", "-z", "0.12", "-Y", "0.0"])
 
-    gz_server = ExecuteProcess(cmd=["gz", "sim", "-s", "-r", world], output="screen")
+    # Keep the server headless while enabling OGRE rendering for GPU lidar and
+    # camera sensors.  ``-s`` alone creates the sensor topics but does not
+    # produce rendering-backed samples, which prevents SLAM and camera
+    # acceptance checks from receiving data in CPU/headless runs.
+    gz_server = ExecuteProcess(cmd=["gz", "sim", "-s", "--headless-rendering", "-r", world], output="screen")
 
     gz_gui = ExecuteProcess(cmd=["gz", "sim", "-g"], output="screen",
         condition=IfCondition(LaunchConfiguration("gui", default="false")))
