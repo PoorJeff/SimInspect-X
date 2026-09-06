@@ -5,6 +5,7 @@ from __future__ import annotations
 import hashlib
 import json
 import re
+import argparse
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Mapping, Sequence
@@ -156,3 +157,27 @@ def evaluate_run(
     }
     write_json_atomic(run_dir / "acceptance.json", acceptance)
     return acceptance
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(description="Validate one SimInspect-X run directory")
+    parser.add_argument("--run-dir", type=Path, required=True)
+    parser.add_argument("--expected-assets", nargs="*", default=None)
+    args = parser.parse_args(argv)
+    run_dir = Path(args.run_dir)
+    expected = list(args.expected_assets or [])
+    if not expected:
+        report_path = run_dir / "mission_report.json"
+        if report_path.is_file():
+            try:
+                report = json.loads(report_path.read_text(encoding="utf-8"))
+                expected = list(report.get("expected_asset_ids", []))
+            except (OSError, ValueError, TypeError, json.JSONDecodeError):
+                expected = []
+    result = evaluate_run(run_dir, expected_assets=expected, run_id=run_dir.name)
+    print(json.dumps(result, ensure_ascii=False, sort_keys=True))
+    return 0 if result["overall"] == "passed" else 1
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
