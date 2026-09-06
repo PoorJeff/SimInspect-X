@@ -49,7 +49,6 @@ bt_navigator:
     # empty plugin list is rejected by bt_navigator at runtime.
 
 controller_server:
-controller_server:
   ros__parameters:
     use_sim_time: true
     controller_frequency: 20.0
@@ -69,39 +68,29 @@ controller_server:
       xy_goal_tolerance: 0.15
       yaw_goal_tolerance: 0.3
     FollowPath:
-      plugin: "mppi_controller::MPPIController"
-      motion_model: "DiffDrive"
-      model:
-        plugin: "mppi_controller::DiffDriveMotionModel"
-      critic_plugins: ["PathFollow", "PathAngle", "GoalCritic", "Obstacles"]
-      optimizer:
-        plugin: "mppi_controller::ZMPPOOptimizer"
-      PathFollow:
-        plugin: "mppi_controller::PathFollowCritic"
-        cost_weight: 10.0
-        offset_from_furthest: 20
-      PathAngle:
-        plugin: "mppi_controller::PathAngleCritic"
-        cost_weight: 2.0
-        offset_from_furthest: 4
-      GoalCritic:
-        plugin: "mppi_controller::GoalCritic"
-        cost_weight: 5.0
-        offset_from_furthest: 4
-      Obstacles:
-        plugin: "mppi_controller::ObstaclesCritic"
-        cost_weight: 100.0
-      min_vel_x: -0.5
+      plugin: "dwb_core::DWBLocalPlanner"
+      debug_trajectory_details: false
+      min_vel_x: 0.0
       max_vel_x: 0.5
       max_vel_theta: 1.5
+      min_speed_xy: 0.0
+      max_speed_xy: 0.5
+      min_speed_theta: 0.0
+      acc_lim_x: 2.5
+      acc_lim_theta: 3.2
+      decel_lim_x: -2.5
+      decel_lim_theta: -3.2
       vx_samples: 20
       wz_samples: 40
-      time_steps: 40
-      lookahead_dist: 1.0
-      max_control_duration: 3.0
-      use_motion_model_noise: true
-      motion_model_noise_gamma: 0.1
+      sim_time: 1.7
+      linear_granularity: 0.05
+      angular_granularity: 0.025
       transform_tolerance: 0.1
+      xy_goal_tolerance: 0.15
+      trans_stopped_velocity: 0.25
+      short_circuit_trajectory_evaluation: true
+      stateful: true
+      critics: ["RotateToGoal", "Oscillation", "BaseObstacle", "GoalAlign", "PathAlign", "PathDist", "GoalDist"]
 
 
 planner_server:
