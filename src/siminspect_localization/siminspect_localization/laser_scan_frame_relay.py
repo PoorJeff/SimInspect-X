@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """Normalize Gazebo's scoped laser frame to the robot TF contract."""
 
 from __future__ import annotations
