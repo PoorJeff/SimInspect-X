@@ -59,7 +59,16 @@ if [[ "$FORCE_BUILD" == "1" ]] || ! docker image inspect "$IMAGE_NAME" >/dev/nul
     docker build -f docker/Dockerfile -t "$IMAGE_NAME" .
 fi
 
+HOST_COMMIT_SHA="$(git -C "$SCRIPT_DIR" rev-parse HEAD 2>/dev/null || true)"
+HOST_GIT_DIRTY="0"
+if [[ -z "$HOST_COMMIT_SHA" ]]; then HOST_COMMIT_SHA="unknown"; fi
+if [[ -n "$(git -C "$SCRIPT_DIR" status --porcelain 2>/dev/null || true)" ]]; then HOST_GIT_DIRTY="1"; fi
+IMAGE_ID="$(docker image inspect "$IMAGE_NAME" --format '{{.Id}}' 2>/dev/null || true)"
+
 # Deliberately omit -t: headless runs must work without a TTY in VMware/CI.
 exec docker run --rm --init --shm-size=2g -i \
     -v "$SCRIPT_DIR:/workspace" -w /workspace \
+    -e "SIMINSPECT_COMMIT_SHA=$HOST_COMMIT_SHA" \
+    -e "SIMINSPECT_GIT_DIRTY=$HOST_GIT_DIRTY" \
+    -e "SIMINSPECT_IMAGE_ID=$IMAGE_ID" \
     "$IMAGE_NAME" bash /workspace/run_demo.sh --in-docker "${FORWARDED[@]}"

@@ -74,6 +74,9 @@ def config_with_overrides(config_path: Path, args: argparse.Namespace) -> DemoCo
 
 
 def _git_metadata(root: Path) -> tuple[str, bool]:
+    supplied_sha = os.environ.get("SIMINSPECT_COMMIT_SHA", "")
+    if len(supplied_sha) == 40 and all(character in "0123456789abcdef" for character in supplied_sha):
+        return supplied_sha, os.environ.get("SIMINSPECT_GIT_DIRTY", "0") == "1"
     try:
         sha = subprocess.run(("git", "rev-parse", "HEAD"), cwd=root, capture_output=True, text=True, check=True).stdout.strip()
         dirty = bool(subprocess.run(("git", "status", "--porcelain"), cwd=root, capture_output=True, text=True, check=True).stdout.strip())

@@ -7,7 +7,7 @@ import pytest
 ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(ROOT / "src" / "siminspect_bringup"))
 
-from siminspect_bringup.demo_orchestrator import build_parser, config_with_overrides  # noqa: E402
+from siminspect_bringup.demo_orchestrator import build_parser, config_with_overrides, _git_metadata  # noqa: E402
 
 
 def test_help_and_public_modes_are_explicit():
@@ -34,3 +34,9 @@ def test_benchmark_flag_is_internal_and_headless_defaults_without_tty():
     assert args.benchmark_evidence is True
     assert args.artifact_root == Path("runs")
     assert args.visual is False
+
+
+def test_container_can_receive_commit_provenance_without_git(monkeypatch, tmp_path):
+    monkeypatch.setenv("SIMINSPECT_COMMIT_SHA", "a" * 40)
+    monkeypatch.setenv("SIMINSPECT_GIT_DIRTY", "0")
+    assert _git_metadata(tmp_path) == ("a" * 40, False)
