@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import argparse
 import os
+import signal
 import subprocess
 import time
 from dataclasses import replace
@@ -124,6 +125,13 @@ def run(args: argparse.Namespace) -> int:
     )
     supervisor = ProcessSupervisor(event_writer=artifacts)
     accepted = False
+    previous_handlers = {}
+
+    def interrupt_handler(signum, _frame):
+        raise KeyboardInterrupt(f"received signal {signum}")
+
+    for signal_name in (signal.SIGINT, signal.SIGTERM):
+        previous_handlers[signal_name] = signal.signal(signal_name, interrupt_handler)
     try:
         artifacts.append_event("mission.started", component="orchestrator", status="started", details={"mode": mode, "method": config.method})
         if args.dry_run:
@@ -158,6 +166,8 @@ def run(args: argparse.Namespace) -> int:
     finally:
         supervisor.terminate_all(grace_s=2.0)
         supervisor.assert_all_stopped()
+        for signal_name, previous in previous_handlers.items():
+            signal.signal(signal_name, previous)
 
     acceptance = evaluate_run(artifacts.run_dir, expected_assets=config.mission_assets, run_id=run_id)
     accepted = acceptance["overall"] == "passed"
