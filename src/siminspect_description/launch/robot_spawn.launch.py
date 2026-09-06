@@ -48,8 +48,16 @@ def generate_launch_description():
     gz_bridge = Node(package="ros_gz_bridge", executable="parameter_bridge",
         arguments=bridges,
         parameters=[{"use_sim_time": use_sim_time}],
-        remappings=[("/camera/image_raw", "/camera/image_raw"),
+        remappings=[("/scan", "/scan_raw"),
+                    ("/camera/image_raw", "/camera/image_raw"),
                     ("/camera/camera_info", "/camera/camera_info")])
+
+    scan_frame_relay = Node(
+        package="siminspect_localization",
+        executable="laser_scan_frame_relay.py",
+        name="laser_scan_frame_relay",
+        parameters=[{"use_sim_time": use_sim_time}],
+    )
 
     gt_pub = Node(
         package="siminspect_benchmark",
@@ -63,5 +71,5 @@ def generate_launch_description():
         DeclareLaunchArgument("gui", default_value="false"),
         DeclareLaunchArgument("world", default_value="empty.sdf"),
         DeclareLaunchArgument("publish_ground_truth", default_value="false"),
-        gz_server, gz_gui, rsp, gz_bridge, gz_spawn, gt_pub,
+        gz_server, gz_gui, rsp, gz_bridge, scan_frame_relay, gz_spawn, gt_pub,
     ])
