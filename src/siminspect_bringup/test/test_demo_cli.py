@@ -7,7 +7,13 @@ import pytest
 ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(ROOT / "src" / "siminspect_bringup"))
 
-from siminspect_bringup.demo_orchestrator import build_parser, config_with_overrides, _git_metadata  # noqa: E402
+from siminspect_bringup.demo_orchestrator import (  # noqa: E402
+    _git_metadata,
+    _has_map_odom_transform,
+    _topic_has_publisher,
+    build_parser,
+    config_with_overrides,
+)
 
 
 def test_help_and_public_modes_are_explicit():
@@ -40,3 +46,10 @@ def test_container_can_receive_commit_provenance_without_git(monkeypatch, tmp_pa
     monkeypatch.setenv("SIMINSPECT_COMMIT_SHA", "a" * 40)
     monkeypatch.setenv("SIMINSPECT_GIT_DIRTY", "0")
     assert _git_metadata(tmp_path) == ("a" * 40, False)
+
+
+def test_navigation_readiness_parsers_require_map_publisher_and_tf_edge():
+    assert _topic_has_publisher("Publisher count: 1")
+    assert not _topic_has_publisher("Publisher count: 0")
+    assert _has_map_odom_transform("frame_id: map\nchild_frame_id: odom\n")
+    assert not _has_map_odom_transform("frame_id: odom\nchild_frame_id: base_link\n")

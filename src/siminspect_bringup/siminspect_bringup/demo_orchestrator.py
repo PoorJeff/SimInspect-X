@@ -24,6 +24,62 @@ from .readiness import ReadinessProbe, run_readiness_probe
 from .run_artifacts import RunArtifacts, build_run_id
 
 
+def _topic_has_publisher(output: str) -> bool:
+    """Parse ``ros2 topic info -v`` without importing ROS into the orchestrator."""
+    for line in output.splitlines():
+        if line.strip().startswith("Publisher count:"):
+            try:
+                return int(line.split(":", 1)[1].strip()) > 0
+            except ValueError:
+                return False
+    return False
+
+
+def _has_map_odom_transform(output: str) -> bool:
+    """Return true when one TF message contains the SLAM map edge."""
+    return "frame_id: map" in output and "child_frame_id: odom" in output
+
+
+def _navigation_ready(process: subprocess.Popen) -> dict[str, object]:
+    """Wait for the map publisher and map->odom TF before starting mission goals."""
+    if process.poll() is not None:
+        return {"ok": False, "reason": "navigation process exited", "observed": {}}
+    try:
+        map_info = subprocess.run(
+            ("ros2", "topic", "info", "/map", "-v"),
+            capture_output=True,
+            text=True,
+            timeout=2.0,
+            check=False,
+        )
+        map_ready = _topic_has_publisher(map_info.stdout)
+        tf_ready = False
+        tf_output = ""
+        for _ in range(3):
+            tf = subprocess.run(
+                ("ros2", "topic", "echo", "/tf", "--once"),
+                capture_output=True,
+                text=True,
+                timeout=2.0,
+                check=False,
+            )
+            tf_output = tf.stdout
+            if _has_map_odom_transform(tf.stdout):
+                tf_ready = True
+                break
+        return {
+            "ok": map_ready and tf_ready,
+            "reason": "map publisher and map->odom TF ready" if map_ready and tf_ready else "waiting for map publisher and map->odom TF",
+            "observed": {
+                "map_publisher": map_ready,
+                "map_odom_tf": tf_ready,
+                "tf_sample": tf_output[-400:],
+            },
+        }
+    except (OSError, subprocess.SubprocessError) as exc:
+        return {"ok": False, "reason": repr(exc), "observed": {}}
+
+
 class DemoArgumentParser(argparse.ArgumentParser):
     def parse_args(self, args: Sequence[str] | None = None, namespace=None):
         parsed = super().parse_args(args, namespace)
@@ -140,13 +196,22 @@ def run(args: argparse.Namespace) -> int:
             specs = build_component_graph(config, mode, args.record, args.benchmark_evidence, artifacts.run_dir)
             for spec in specs:
                 process = supervisor.start(spec)
-                probe = ReadinessProbe(
-                    spec.name,
-                    lambda process=process: process.poll() is None,
-                    expected=f"{spec.name} process remains alive after launch",
-                    component=spec.name,
-                    log_path=str(spec.log_path.relative_to(artifacts.run_dir).as_posix()),
-                )
+                if spec.name == "navigation":
+                    probe = ReadinessProbe(
+                        "navigation_ready",
+                        lambda process=process: _navigation_ready(process),
+                        expected="/map publisher and map -> odom TF",
+                        component=spec.name,
+                        log_path=str(spec.log_path.relative_to(artifacts.run_dir).as_posix()),
+                    )
+                else:
+                    probe = ReadinessProbe(
+                        spec.name,
+                        lambda process=process: process.poll() is None,
+                        expected=f"{spec.name} process remains alive after launch",
+                        component=spec.name,
+                        log_path=str(spec.log_path.relative_to(artifacts.run_dir).as_posix()),
+                    )
                 result = run_readiness_probe(probe, min(config.readiness_timeout_s, 5.0))
                 artifacts.append_event("readiness.completed", component=spec.name, status=result.status, details={"reason": result.reason, "observed": dict(result.observed), "evidence": list(result.evidence)})
                 if result.status != "passed":
