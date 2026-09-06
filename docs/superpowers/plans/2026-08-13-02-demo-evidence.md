@@ -326,11 +326,11 @@ git commit -m "feat: probe readiness and clean demo processes"
 - Consumes: `/camera/image_raw`, `ros_gz_sim spawn_entity`, F06/F07 configuration, and seed.
 - Produces: `/camera/image_faulted` for production Vision input; `/benchmark/fault_state` JSON containing scenario, seed, actuator, active, and evidence; Gazebo entity `f06_blocking_box`; benchmark-only `benchmark_evaluation.json` with real path, gauge-error, re-inspection, recovery, and actuator metrics.
 
-- [ ] **Step 1: Write failing actuator tests**
+- [x] **Step 1: Write failing actuator tests**
 
 Assert F07 applies `cv2.GaussianBlur(..., sigmaX=3.0)` deterministically, publishes altered frames with preserved headers, and leaves F00 byte-identical. Derive the F06 pose with the same B0 function from `gauge_pump_01` (`x=3.0`, `y=1.8`, `yaw=3.14`, `desired_distance_m=0.8`), assert the result is within `0.01 m` of `(2.20, 1.80)`, and build the exact `ros2 run ros_gz_sim spawn_entity --name f06_blocking_box --sdf_filename BLOCKING_BOX_SDF --pos 2.20 1.80 0.50 --euler 0.0 0.0 0.0` command. Require a successful spawn confirmation and assert the box footprint intersects the B0 goal tolerance while leaving at least one P2 candidate collision-free. Update `fault_scenarios.yaml` from the stale `(4.0, 1.0)` pose to the derived fixed-viewpoint pose. Add a contract test that Vision consumes only `/camera/image_faulted` in demo mode. Test the recorder's Euclidean trajectory accumulation, match readings to benchmark-only asset truth by `asset_id`, count distinct re-inspection poses and recoveries, require `producer == "siminspect_benchmark"`, and reject a run-ID mismatch.
 
-- [ ] **Step 2: Verify failure**
+- [x] **Step 2: Verify failure**
 
 ```bash
 python3 -m pytest src/siminspect_benchmark/test/test_fault_injector.py src/siminspect_benchmark/test/test_fault_image_relay.py src/siminspect_benchmark/test/test_fault_actuation_launch.py src/siminspect_benchmark/test/test_e4_evidence_recorder.py -q
@@ -338,11 +338,11 @@ python3 -m pytest src/siminspect_benchmark/test/test_fault_injector.py src/simin
 
 Expected: FAIL because F06 is a stub and F07 never touches camera frames.
 
-- [ ] **Step 3: Implement the two real actuators**
+- [x] **Step 3: Implement the two real actuators**
 
 Make F00/F07 use one relay so the consumer topic never changes. For F06, spawn the box only after `/world/plant/create` is bridged and record the response; on cleanup delete the owned entity. Emit structured fault-state messages and evidence events. Do not treat metadata-only publication as successful actuation. The evaluation recorder loads declared benchmark truth from benchmark configuration, never from the Mission report, integrates the benchmark pose trajectory, joins readings by asset ID after the run, atomically writes the locked `benchmark_evaluation.json`, and is started only in benchmark/evidence mode.
 
-- [ ] **Step 4: Verify unit and Gazebo smoke behavior**
+- [x] **Step 4: Verify unit and Gazebo smoke behavior**
 
 ```bash
 python3 -m pytest src/siminspect_benchmark/test/test_fault_injector.py src/siminspect_benchmark/test/test_fault_image_relay.py src/siminspect_benchmark/test/test_fault_actuation_launch.py src/siminspect_benchmark/test/test_e4_evidence_recorder.py -q
@@ -354,7 +354,7 @@ gz model --list | grep '^f06_blocking_box$'
 
 Expected: tests PASS; both image streams publish; state reports the requested active actuator; F06 entity exists only during the run.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/siminspect_benchmark src/siminspect_gauge_vision/siminspect_gauge_vision/gauge_vision_node.py

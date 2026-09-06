@@ -189,7 +189,7 @@ def test_inspect_image_publishes_reading_for_current_asset():
 
 def test_init_wires_topics_and_transient_mission_state_qos():
     node = GaugeVisionNode()
-    assert node._sub_img.topic == "/camera/image_raw"
+    assert node._sub_img.topic == "/camera/image_faulted"
     assert node._sub_img.callback.__name__ == "_cb_image"
     assert node._pub.topic == "/inspection/gauge_reading"
     state_subscription = next(

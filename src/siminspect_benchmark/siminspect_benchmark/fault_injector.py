@@ -5,17 +5,61 @@ Loads fault_scenarios.yaml, selects a scenario, applies the seed override,
 logs scenario+seed, publishes /benchmark/fault_state, and
 dispatches to per-fault handlers.
 
-Honest scope (T01): compute-style faults (F01-F04, F07, F08) prepare
-deterministic perturbation sequences from the seed. World/service-level
-faults (F05, F06, F09, F10) are documented actuator stubs to be wired by the
-experiment runner (P9-T02) on the Ubuntu/Gazebo host.
+F06 is an owned Gazebo entity actuator and F07's frame mutation is implemented
+by the shared image relay. Other scenarios retain their documented scope.
 """
+import json
+import math
 import os
+import subprocess
+import time
 
-import rclpy
-from rclpy.node import Node
-from std_msgs.msg import String
-from ament_index_python.packages import get_package_share_directory
+
+def derive_f06_blocking_pose(asset_pose, desired_distance_m=0.8):
+    """Return the B0 fixed-viewpoint pose for the pump gauge."""
+    if isinstance(asset_pose, dict):
+        x, y, yaw = asset_pose["x"], asset_pose["y"], asset_pose["yaw"]
+    else:
+        x, y, yaw = asset_pose
+    x = float(x) + float(desired_distance_m) * math.cos(float(yaw))
+    y = float(y) + float(desired_distance_m) * math.sin(float(yaw))
+    viewpoint_yaw = math.atan2(math.sin(float(yaw) + math.pi), math.cos(float(yaw) + math.pi))
+    if abs(viewpoint_yaw) < 1e-9:
+        viewpoint_yaw = 0.0
+    return round(x, 3), round(y, 3), round(viewpoint_yaw, 3)
+
+
+def build_f06_spawn_command(sdf_filename, viewpoint_pose, z=0.5):
+    """Build the exact ros_gz_sim command used by the owned F06 actuator."""
+    x, y, _ = viewpoint_pose
+    return (
+        "ros2", "run", "ros_gz_sim", "spawn_entity", "--name", "f06_blocking_box",
+        "--sdf_filename", str(sdf_filename), "--pos", f"{float(x):.2f}",
+        f"{float(y):.2f}", f"{float(z):.2f}", "--euler", "0.0", "0.0", "0.0",
+    )
+
+
+def wait_for_gazebo_create_service(timeout_s=30.0, poll_s=0.5, runner=subprocess.run):
+    """Wait until ros_gz_bridge exposes the world create service."""
+    deadline = time.monotonic() + float(timeout_s)
+    while time.monotonic() < deadline:
+        result = runner(("ros2", "service", "list"), capture_output=True,
+                        text=True, check=False)
+        if "/world/plant/create" in result.stdout.splitlines():
+            return True
+        time.sleep(float(poll_s))
+    return False
+
+try:
+    import rclpy
+    from rclpy.node import Node
+    from std_msgs.msg import String
+    from ament_index_python.packages import get_package_share_directory
+except ImportError:  # pure helpers remain importable on the Windows host
+    rclpy = None
+    Node = object
+    String = None
+    get_package_share_directory = None
 
 try:
     from siminspect_benchmark.fault_scenarios import (
@@ -64,16 +108,29 @@ class FaultInjector(Node):
             self.scenario = resolve_seed(self.scenario, seed_override)
         self.seed = self.scenario["seed"]
 
+        self._f06_spawned = False
+        self._f06_model = None
         self.get_logger().info(
             f"Fault injector active: scenario={scenario_id} "
             f"seed={self.seed} name={self.scenario['name']}")
-        self._publish_state(f"active scenario={scenario_id} seed={self.seed}")
+        self._publish_state(
+            scenario=scenario_id,
+            actuator="fault_image_relay" if scenario_id == "F07" else ("gazebo_spawn" if scenario_id == "F06" else "none"),
+            active=scenario_id in {"F06", "F07"},
+            evidence={},
+        )
 
         self._apply_scenario(scenario_id)
 
-    def _publish_state(self, text):
+    def _publish_state(self, *, scenario, actuator, active, evidence):
         msg = String()
-        msg.data = text
+        msg.data = json.dumps({
+            "scenario": scenario,
+            "seed": self.seed,
+            "actuator": actuator,
+            "active": active,
+            "evidence": evidence,
+        }, sort_keys=True)
         self._state_pub.publish(msg)
 
     # -- per-scenario dispatch -----------------------------------------
@@ -101,9 +158,7 @@ class FaultInjector(Node):
             self.get_logger().warn(
                 "F05 dynamic_obstacle: actuator stub, not wired (P9-T02)")
         elif sid == "F06":
-            # TODO(P9-T02): spawn occluder at the fixed viewpoint
-            self.get_logger().warn(
-                "F06 blocked_fixed_viewpoint: actuator stub, not wired (P9-T02)")
+            self._spawn_f06_box()
         elif sid == "F07":
             self._blur = p["blur_sigma"]
             self.get_logger().info(f"F07: blur sigma {self._blur}")
@@ -125,8 +180,41 @@ class FaultInjector(Node):
             self._dark = p["brightness_factor"]
             self.get_logger().info("F11: mixed stress factors prepared")
 
+    def _spawn_f06_box(self):
+        pkg = get_package_share_directory("siminspect_benchmark")
+        sdf = os.path.join(pkg, "models", "blocking_box", "model.sdf")
+        pose = derive_f06_blocking_pose((3.0, 1.8, math.pi))
+        command = build_f06_spawn_command(sdf, pose)
+        if not wait_for_gazebo_create_service():
+            raise RuntimeError("F06 spawn refused: /world/plant/create is not bridged")
+        result = subprocess.run(command, capture_output=True, text=True, timeout=30, check=False)
+        evidence = {
+            "command": list(command),
+            "returncode": result.returncode,
+            "stdout": result.stdout[-500:],
+            "stderr": result.stderr[-500:],
+            "spawned": result.returncode == 0,
+            "model": "blocking_box",
+        }
+        self._f06_spawned = bool(evidence["spawned"])
+        self._f06_model = "blocking_box"
+        self._publish_state(scenario="F06", actuator="gazebo_spawn", active=self._f06_spawned, evidence=evidence)
+        if not self._f06_spawned:
+            raise RuntimeError(f"F06 spawn failed: {evidence}")
+
+    def destroy_node(self):
+        if getattr(self, "_f06_spawned", False):
+            subprocess.run(
+                ("ros2", "run", "ros_gz_sim", "delete_entity", "--name", "f06_blocking_box"),
+                capture_output=True, text=True, timeout=30, check=False,
+            )
+            self._f06_spawned = False
+        return super().destroy_node()
+
 
 def main():
+    if rclpy is None:
+        raise RuntimeError("FaultInjector requires the ROS runtime")
     rclpy.init()
     try:
         node = FaultInjector()

@@ -63,7 +63,7 @@ scenarios:
       duration_s: 0           # whole mission
       asset_id: "gauge_pump_01"
       occluder: "blocking_box"
-      occluder_pose: {x: 4.0, y: 1.0, yaw: 0.0}
+      occluder_pose: {x: 2.2, y: 1.8, yaw: 0.0}
 
   - id: "F07"
     name: camera_blur

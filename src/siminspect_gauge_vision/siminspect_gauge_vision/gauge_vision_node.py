@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Gauge vision ROS node (P10-T01; closes the P5 wiring debt).
 
-Thin glue per D-007: subscribes /camera/image_raw and /inspection/mission_state,
+Thin glue per D-007: subscribes /camera/image_faulted and /inspection/mission_state,
 runs the detector -> reader -> confidence pure pipeline, publishes
 /inspection/gauge_reading. All logic lives in the pure modules.
 """
@@ -29,7 +29,7 @@ class GaugeVisionNode(Node):
         super().__init__("gauge_vision")
         self._bridge = CvBridge()
         self._sub_img = self.create_subscription(
-            Image, "/camera/image_raw", self._cb_image, 10)
+            Image, "/camera/image_faulted", self._cb_image, 10)
         self._sub_state = self.create_subscription(
             MissionState, "/inspection/mission_state", self._cb_state,
             MISSION_STATE_QOS)
