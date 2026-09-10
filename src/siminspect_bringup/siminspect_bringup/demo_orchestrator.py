@@ -250,10 +250,14 @@ def run(args: argparse.Namespace) -> int:
     except BaseException as exc:
         artifacts.append_event("run.failed", component="orchestrator", status="failed", details={"error": repr(exc)})
     finally:
-        supervisor.terminate_all(grace_s=2.0)
-        supervisor.assert_all_stopped()
-        for signal_name, previous in previous_handlers.items():
-            signal.signal(signal_name, previous)
+        try:
+            supervisor.terminate_all(grace_s=2.0)
+            supervisor.assert_all_stopped()
+        except BaseException as exc:
+            artifacts.append_event("run.failed", component="cleanup", status="failed", details={"error": repr(exc)})
+        finally:
+            for signal_name, previous in previous_handlers.items():
+                signal.signal(signal_name, previous)
 
     acceptance = evaluate_run(artifacts.run_dir, expected_assets=config.mission_assets, run_id=run_id)
     accepted = acceptance["overall"] == "passed"

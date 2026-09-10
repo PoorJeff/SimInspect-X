@@ -109,6 +109,15 @@ def test_benchmark_evidence_alone_adds_ground_truth_processes():
         "ros2", "run", "siminspect_benchmark", "e4_evidence_recorder.py")
 
 
+def test_ros_nodes_share_simulation_clock_in_all_modes():
+    for mode in ("headless", "visual"):
+        for spec in graph(mode=mode, benchmark_evidence=True):
+            if spec.argv[:2] == ("ros2", "run") or spec.name == "rviz":
+                ros_args = spec.argv.index("--ros-args")
+                params = spec.argv[ros_args + 1:]
+                assert ("-p", "use_sim_time:=true") in tuple(zip(params, params[1:])), spec.name
+
+
 def test_ground_truth_selection_excludes_all_non_robot_transforms():
     class Transform:
         def __init__(self, child_frame_id):

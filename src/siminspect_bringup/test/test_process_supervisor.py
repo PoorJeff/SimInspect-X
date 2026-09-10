@@ -1,4 +1,5 @@
 import os
+import signal
 import sys
 import time
 from pathlib import Path
@@ -44,3 +45,39 @@ def test_duplicate_name_is_rejected_and_early_death_is_safe(tmp_path):
     time.sleep(0.1)
     supervisor.terminate_all(grace_s=0.1)
     supervisor.assert_all_stopped()
+
+
+@pytest.mark.skipif(os.name == "nt", reason="POSIX process-group cleanup requires Ubuntu")
+def test_cleanup_reaps_group_when_parent_has_already_exited(tmp_path):
+    # The parent waits for the child's signal handlers, then exits while its
+    # child stays in the owned group and deliberately ignores graceful stops.
+    child_script = (
+        "import signal,time; "
+        "signal.signal(signal.SIGINT, signal.SIG_IGN); "
+        "signal.signal(signal.SIGTERM, signal.SIG_IGN); "
+        "print('ready', flush=True); time.sleep(30)"
+    )
+    parent_script = (
+        "import subprocess,sys; "
+        f"child=subprocess.Popen([sys.executable, '-c', {child_script!r}], stdout=subprocess.PIPE); "
+        "child.stdout.readline(); print(child.pid, flush=True)"
+    )
+    supervisor = ProcessSupervisor()
+    process = supervisor.start(_spec("orphan", parent_script, tmp_path / "orphan.log"))
+    try:
+        assert process.wait(timeout=5) == 0
+        os.killpg(process.pid, 0)
+        with pytest.raises(AssertionError, match="owned processes still running"):
+            supervisor.assert_all_stopped()
+
+        supervisor.terminate_all(grace_s=0.3)
+
+        supervisor.assert_all_stopped()
+        with pytest.raises(ProcessLookupError):
+            os.killpg(process.pid, 0)
+    finally:
+        try:
+            os.killpg(process.pid, signal.SIGKILL)
+        except ProcessLookupError:
+            pass
+        process.wait(timeout=5)

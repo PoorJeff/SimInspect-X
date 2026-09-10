@@ -92,3 +92,40 @@ def test_evaluate_run_passes_only_when_all_required_gates_pass(tmp_path):
     result = evaluate_run(run_dir, expected_assets=ASSETS, run_id="run-1")
     assert result["overall"] == "passed"
     assert json.loads((run_dir / "acceptance.json").read_text(encoding="utf-8"))["overall"] == "passed"
+
+
+@pytest.mark.parametrize("event", [
+    {"event": "run.failed", "status": "failed", "details": {"error": "KeyboardInterrupt"}},
+    {"event": "mission.timeout", "status": "failed"},
+    {"event": "readiness.completed", "status": "timeout"},
+    {"event": "process.stopped", "status": "failed"},
+])
+def test_explicit_runtime_failure_overrides_a_successful_report(tmp_path, event):
+    write_json_atomic(tmp_path / "manifest.json", {
+        "schema_version": "1.0", "run_id": "run-1",
+        "git": {"commit_sha": "a" * 40, "dirty": False},
+    })
+    write_json_atomic(tmp_path / "mission_report.json", report())
+    events_text = json.dumps({"run_id": "run-1", **event}) + "\n"
+    (tmp_path / "events.jsonl").write_text(events_text, encoding="utf-8")
+
+    result = evaluate_run(tmp_path, expected_assets=ASSETS, run_id="run-1")
+
+    assert result["overall"] == "failed"
+    assert any(g["id"] == "run_outcome" and g["status"] == "failed" for g in result["gates"])
+    assert (tmp_path / "events.jsonl").read_text(encoding="utf-8") == events_text
+    assert json.loads((tmp_path / "mission_report.json").read_text(encoding="utf-8")) == report()
+
+
+def test_malformed_events_cannot_hide_a_runtime_failure(tmp_path):
+    write_json_atomic(tmp_path / "manifest.json", {
+        "schema_version": "1.0", "run_id": "run-1",
+        "git": {"commit_sha": "a" * 40, "dirty": False},
+    })
+    write_json_atomic(tmp_path / "mission_report.json", report())
+    (tmp_path / "events.jsonl").write_text('{"event":"run.failed"', encoding="utf-8")
+
+    result = evaluate_run(tmp_path, expected_assets=ASSETS, run_id="run-1")
+
+    assert result["overall"] == "failed"
+    assert any(g["id"] == "events" and g["status"] == "failed" for g in result["gates"])

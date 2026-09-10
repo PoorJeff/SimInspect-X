@@ -80,25 +80,43 @@ class ProcessSupervisor:
         return process
 
     @staticmethod
-    def _wait(process: subprocess.Popen, timeout_s: float) -> bool:
+    def _group_alive(process: subprocess.Popen) -> bool:
+        # Reap the leader, but do not confuse its exit with its children's exit.
+        parent_running = process.poll() is None
+        if os.name == "nt":
+            return parent_running
         try:
-            process.wait(timeout=max(0.0, timeout_s))
+            # start_new_session makes the original PID the stable process-group
+            # ID, even after the leader exits and getpgid(pid) no longer works.
+            os.killpg(process.pid, 0)
             return True
-        except subprocess.TimeoutExpired:
+        except ProcessLookupError:
             return False
+        except PermissionError:
+            return True
+
+    @classmethod
+    def _wait(cls, process: subprocess.Popen, timeout_s: float) -> bool:
+        deadline = time.monotonic() + max(0.0, timeout_s)
+        while cls._group_alive(process):
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
+                return False
+            time.sleep(min(0.02, remaining))
+        return True
 
     @staticmethod
     def _signal_group(process: subprocess.Popen, sig: int) -> None:
-        if process.poll() is not None:
-            return
         if os.name == "nt":
+            if process.poll() is not None:
+                return
             if sig == signal.SIGINT:
                 try:
                     process.send_signal(getattr(signal, "CTRL_BREAK_EVENT", signal.SIGTERM))
                     return
                 except (OSError, ValueError):
                     pass
-            if sig in {signal.SIGTERM, signal.SIGKILL}:
+            if sig in {signal.SIGTERM, getattr(signal, "SIGKILL", signal.SIGTERM)}:
                 try:
                     subprocess.run(
                         ["taskkill", "/PID", str(process.pid), "/T", "/F"],
@@ -112,29 +130,38 @@ class ProcessSupervisor:
             process.terminate()
             return
         try:
-            os.killpg(os.getpgid(process.pid), sig)
+            os.killpg(process.pid, sig)
         except ProcessLookupError:
             pass
 
     def terminate_all(self, grace_s: float = 10.0) -> None:
         if grace_s < 0:
             raise ValueError("grace_s must be non-negative")
-        for managed in list(self._managed.values()):
+        managed_processes = list(self._managed.values())
+        for sig in (signal.SIGINT, signal.SIGTERM, getattr(signal, "SIGKILL", signal.SIGTERM)):
+            active = [managed for managed in managed_processes if self._group_alive(managed.process)]
+            if not active:
+                break
+            for managed in active:
+                self._signal_group(managed.process, sig)
+            # One deadline per escalation stage bounds cleanup independently of
+            # the number of components, including already-orphaned children.
+            deadline = time.monotonic() + grace_s
+            for managed in active:
+                self._wait(managed.process, max(0.0, deadline - time.monotonic()))
+        for managed in managed_processes:
             process = managed.process
-            if process.poll() is None:
-                self._signal_group(process, signal.SIGINT)
-                if not self._wait(process, grace_s):
-                    self._signal_group(process, signal.SIGTERM)
-                    if not self._wait(process, grace_s):
-                        self._signal_group(process, signal.SIGKILL)
-                        self._wait(process, grace_s)
-            else:
-                process.wait()
+            stopped = not self._group_alive(process)
             managed.log_stream.close()
-            self._emit("process.stopped", managed.spec, "stopped", returncode=process.returncode)
+            self._emit(
+                "process.stopped", managed.spec, "stopped" if stopped else "failed",
+                returncode=process.returncode,
+                process_group_id=process.pid if os.name != "nt" else None,
+                group_stopped=stopped,
+            )
 
     def assert_all_stopped(self) -> None:
-        active = [name for name, managed in self._managed.items() if managed.process.poll() is None]
+        active = [name for name, managed in self._managed.items() if self._group_alive(managed.process)]
         if active:
             raise AssertionError(f"owned processes still running: {active}")
 

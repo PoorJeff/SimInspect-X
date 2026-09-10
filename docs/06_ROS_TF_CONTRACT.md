@@ -52,16 +52,16 @@ float64 max_linear_vel
 float64 max_angular_vel
 float64 timeout_s
 ---
-# Feedback — published by siminspect_precision_control during approach
-float64 position_error
-float64 yaw_error
-float64 time_elapsed
----
 # Result — returned when approach completes or times out
 bool success
 float64 final_position_error
 float64 final_yaw_error
 float64 elapsed_time
+---
+# Feedback — published by siminspect_precision_control during approach
+float64 position_error
+float64 yaw_error
+float64 time_elapsed
 ```
 
 - The action server runs in `siminspect_precision_control`.

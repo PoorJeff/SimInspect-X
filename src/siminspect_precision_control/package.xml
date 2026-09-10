@@ -11,12 +11,17 @@
   <buildtool_depend>ament_cmake_python</buildtool_depend>
 
   <depend>rclpy</depend>
+  <depend>geometry_msgs</depend>
+  <depend>nav_msgs</depend>
   <depend>siminspect_interfaces</depend>
+  <depend>tf2_ros</depend>
+  <depend>tf2_geometry_msgs</depend>
 
   <depend>python3-numpy</depend>
   <depend>python3-scipy</depend>
   <test_depend>ament_cmake_pytest</test_depend>
   <test_depend>python3-pytest</test_depend>
+  <test_depend>action_msgs</test_depend>
 
   <export>
     <build_type>ament_cmake</build_type>

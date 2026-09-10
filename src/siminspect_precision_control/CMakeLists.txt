@@ -24,6 +24,8 @@ if(BUILD_TESTING)
   ament_add_pytest_test(test_handoff test/test_handoff.py)
   ament_add_pytest_test(test_pid_controller test/test_pid_controller.py)
   ament_add_pytest_test(test_mpc_controller test/test_mpc_controller.py)
+  ament_add_pytest_test(test_controller_runtime test/test_controller_runtime.py
+    TIMEOUT 60)
 endif()
 
 ament_package()

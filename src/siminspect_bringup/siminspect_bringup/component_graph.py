@@ -31,6 +31,10 @@ def build_component_graph(
     env = (("ROS_LOG_DIR", str(run_dir / "ros_logs")),)
 
     def process(name: str, *argv: str) -> ProcessSpec:
+        if argv[:2] == ("ros2", "run") or name == "rviz":
+            if "--ros-args" not in argv:
+                argv += ("--ros-args",)
+            argv += ("-p", "use_sim_time:=true")
         return ProcessSpec(name, tuple(argv), run_dir / "logs" / f"{name}.log", env)
 
     assets = f"expected_asset_ids:=[{','.join(config.mission_assets)}]"

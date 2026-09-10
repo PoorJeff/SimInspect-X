@@ -1,4 +1,5 @@
 import sys
+import json
 from pathlib import Path
 
 import pytest
@@ -63,3 +64,20 @@ def test_navigation_readiness_parsers_require_map_publisher_and_tf_edge():
 def test_timeout_output_is_json_safe_text():
     assert _output_text(b"Waiting for transform") == "Waiting for transform"
     assert _output_text(None) == ""
+
+
+def test_cleanup_failure_preserves_failed_acceptance(monkeypatch, tmp_path):
+    from siminspect_bringup import demo_orchestrator
+
+    def cleanup_failure(self, grace_s):
+        raise RuntimeError("owned child still running")
+
+    monkeypatch.setattr(demo_orchestrator.ProcessSupervisor, "terminate_all", cleanup_failure)
+    monkeypatch.setattr(demo_orchestrator, "_git_metadata", lambda _: ("a" * 40, False))
+    args = build_parser().parse_args(["--dry-run", "--artifact-root", str(tmp_path)])
+    assert demo_orchestrator.run(args) == 1
+    run_dir = next(tmp_path.iterdir())
+    acceptance = json.loads((run_dir / "acceptance.json").read_text())
+    assert acceptance["overall"] == "failed"
+    events = [json.loads(line) for line in (run_dir / "events.jsonl").read_text().splitlines()]
+    assert any(event["event"] == "run.failed" and event["component"] == "cleanup" for event in events)

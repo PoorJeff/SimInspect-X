@@ -4,11 +4,21 @@ import math
 import rclpy
 from rclpy.node import Node
 from rclpy.action import ActionServer, CancelResponse, GoalResponse
+from rclpy.clock import Clock, ClockType
+from rclpy.task import Future
+from rclpy.time import Time
 from geometry_msgs.msg import Twist
 from nav_msgs.msg import Odometry
 from siminspect_interfaces.action import PrecisionApproach
-from pid_controller import PIDController, PIDGains
-from mpc_controller import MPCController, MPCParams
+from tf2_geometry_msgs import do_transform_pose
+from tf2_ros import Buffer, TransformException, TransformListener
+
+try:
+    from siminspect_precision_control.pid_controller import PIDController, PIDGains
+    from siminspect_precision_control.mpc_controller import MPCController, MPCParams
+except ImportError:  # Installed executable and source-tree script layout.
+    from pid_controller import PIDController, PIDGains
+    from mpc_controller import MPCController, MPCParams
 
 
 class ControllerInterface(Node):
@@ -28,9 +38,14 @@ class ControllerInterface(Node):
 
         # Odom subscriber
         self.latest_odom = None
+        self._odom_frame = None
         self._odom_sub = self.create_subscription(
             Odometry, "/odometry/filtered", self._cb_odom, 10
         )
+        self._tf_buffer = Buffer(node=self)
+        self._tf_listener = TransformListener(self._tf_buffer, self)
+        # Cancellation must still progress if the simulation clock pauses.
+        self._steady_clock = Clock(clock_type=ClockType.STEADY_TIME)
 
         # Command publisher
         self._cmd_pub = self.create_publisher(Twist, "/cmd_vel", 10)
@@ -57,6 +72,7 @@ class ControllerInterface(Node):
         p = msg.pose.pose.position
         q = msg.pose.pose.orientation
         yaw = 2.0 * math.atan2(q.z, q.w)
+        self._odom_frame = msg.header.frame_id
         self.latest_odom = (p.x, p.y, yaw,
                             msg.twist.twist.linear.x,
                             msg.twist.twist.angular.z)
@@ -88,12 +104,61 @@ class ControllerInterface(Node):
     # Main control loop
     # ------------------------------------------------------------------
 
+    async def _wait_for_control_tick(self):
+        """Yield to odometry, TF and action callbacks on the same executor."""
+        ready = Future(executor=self.executor)
+
+        def wake():
+            if not ready.done():
+                ready.set_result(None)
+
+        timer = self.create_timer(0.05, wake, clock=self._steady_clock)
+        try:
+            await ready
+        finally:
+            self.destroy_timer(timer)
+
     async def execute_callback(self, goal_handle):
         request = goal_handle.request
-        target_pose = request.target_pose.pose
         timeout = request.timeout_s
         max_v = min(request.max_linear_vel, 0.5) if request.max_linear_vel > 0 else 0.5
         max_w = min(request.max_angular_vel, 1.5) if request.max_angular_vel > 0 else 1.5
+
+        # Convert the map goal into the frame of the measured odometry. The
+        # viewpoint is a fixed spatial target; use the latest map/odom TF,
+        # not its earlier request-correlation timestamp.
+        target_pose = None
+        for _ in range(40):
+            if goal_handle.is_cancel_requested:
+                self._stop_robot()
+                goal_handle.canceled()
+                return PrecisionApproach.Result(success=False)
+            if self.latest_odom is not None and self._odom_frame:
+                if request.target_pose.header.frame_id == self._odom_frame:
+                    target_pose = request.target_pose.pose
+                    break
+                try:
+                    transform = self._tf_buffer.lookup_transform(
+                        self._odom_frame,
+                        request.target_pose.header.frame_id, Time())
+                    target_pose = do_transform_pose(
+                        request.target_pose.pose, transform)
+                    break
+                except TransformException:
+                    pass
+            await self._wait_for_control_tick()
+
+        if target_pose is None:
+            self._stop_robot()
+            self.get_logger().error(
+                "Odometry or target-to-odometry transform unavailable, aborting")
+            goal_handle.abort()
+            result = PrecisionApproach.Result()
+            result.success = False
+            result.final_position_error = float("inf")
+            result.final_yaw_error = float("inf")
+            result.elapsed_time = 0.0
+            return result
 
         target_yaw = 2.0 * math.atan2(
             target_pose.orientation.z, target_pose.orientation.w
@@ -112,29 +177,12 @@ class ControllerInterface(Node):
             gains = PIDGains(v_max=max_v, w_max=max_w)
             controller = PIDController(target, gains=gains)
 
-        # Wait for odometry
-        for _ in range(50):
-            if self.latest_odom is not None:
-                break
-            rclpy.spin_once(self, timeout_sec=0.01)
-
-        if self.latest_odom is None:
-            self.get_logger().error("No odometry received, aborting")
-            goal_handle.abort()
-            result = PrecisionApproach.Result()
-            result.success = False
-            result.final_position_error = float("inf")
-            result.final_yaw_error = float("inf")
-            result.elapsed_time = 0.0
-            return result
-
         self.get_logger().info(
             f"Starting {ctype.upper()} approach to ("
             f"{target[0]:.2f}, {target[1]:.2f}, yaw={target[2]:.2f})"
         )
 
         start_time = self.get_clock().now()
-        rate = self.create_rate(20)
 
         feedback_msg = PrecisionApproach.Feedback()
         final_pos_err = 0.0
@@ -169,7 +217,7 @@ class ControllerInterface(Node):
                 return result
 
             if self.latest_odom is None:
-                rate.sleep()
+                await self._wait_for_control_tick()
                 continue
             cx, cy, cyaw, _, _ = self.latest_odom
 
@@ -193,7 +241,7 @@ class ControllerInterface(Node):
             if converged:
                 break
 
-            rate.sleep()
+            await self._wait_for_control_tick()
 
         self._stop_robot()
         elapsed = (self.get_clock().now() - start_time).nanoseconds / 1e9

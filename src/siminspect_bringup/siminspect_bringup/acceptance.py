@@ -146,8 +146,27 @@ def evaluate_run(
         gates.extend(validate_mission_report(report, expected_assets, str(actual_run_id)))
     else:
         gates.extend(validate_mission_report({}, expected_assets, str(actual_run_id)))
-    events_ok = events_path.is_file()
-    gates.append(_gate("events", events_ok, "events.jsonl is present" if events_ok else "events.jsonl is missing", "events.jsonl"))
+    events: list[Mapping[str, Any]] = []
+    try:
+        events = [json.loads(line) for line in events_path.read_text(encoding="utf-8").splitlines() if line.strip()]
+        events_ok = all(isinstance(event, Mapping) for event in events)
+    except (OSError, ValueError, TypeError):
+        events_ok = False
+    gates.append(_gate("events", events_ok, "events.jsonl is readable JSON Lines" if events_ok else "events.jsonl is missing or malformed", "events.jsonl"))
+    failed_events = [
+        str(event.get("event")) for event in events if isinstance(event, Mapping)
+        and (
+            event.get("event") in {"run.failed", "mission.timeout", "run.dry_run"}
+            or (event.get("event") in {"readiness.completed", "process.stopped"}
+                and event.get("status") in {"failed", "timeout"})
+        )
+    ]
+    gates.append(_gate(
+        "run_outcome", events_ok and not failed_events,
+        "no explicit runtime failure recorded" if events_ok and not failed_events
+        else "runtime failed: " + ", ".join(failed_events or ["unreadable events"]),
+        "events.jsonl",
+    ))
 
     acceptance = {
         "schema_version": "1.0",
