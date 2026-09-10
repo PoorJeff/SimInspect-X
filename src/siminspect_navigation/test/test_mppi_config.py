@@ -7,7 +7,7 @@ def test_controller_is_mppi():
         data = yaml.safe_load(f)
     cs = data["controller_server"]["ros__parameters"]
     fw = cs["FollowPath"]
-    assert "mppi" in fw["plugin"].lower(), f"Expected MPPI, got {fw["plugin"]}"
+    assert fw["plugin"] == "nav2_mppi_controller::MPPIController"
 
 def test_motion_model_diffdrive():
     with open(CFG) as f:
@@ -19,17 +19,18 @@ def test_four_critics():
     with open(CFG) as f:
         data = yaml.safe_load(f)
     fw = data["controller_server"]["ros__parameters"]["FollowPath"]
-    critics = fw.get("critic_plugins", [])
+    critics = fw.get("critics", [])
     assert len(critics) >= 4, f"Expected >=4 critics, got {len(critics)}"
-    for c in ["PathFollow", "PathAngle", "GoalCritic", "Obstacles"]:
+    for c in ["PathFollowCritic", "PathAngleCritic", "GoalCritic", "CostCritic"]:
         assert c in critics, f"Missing critic: {c}"
 
 def test_velocity_limits():
     with open(CFG) as f:
         data = yaml.safe_load(f)
     fw = data["controller_server"]["ros__parameters"]["FollowPath"]
-    assert fw["max_vel_x"] > 0
-    assert fw["max_vel_theta"] > 0
+    assert 0 < fw["vx_max"] <= 0.5
+    assert 0 < fw["wz_max"] <= 1.5
+    assert fw["model_dt"] == pytest.approx(1.0 / data["controller_server"]["ros__parameters"]["controller_frequency"])
 
 def test_goals_exist():
     gf = os.path.join(os.path.dirname(__file__), "..", "config", "mppi_test_goals.yaml")

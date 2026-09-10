@@ -74,7 +74,9 @@ def test_cleanup_failure_preserves_failed_acceptance(monkeypatch, tmp_path):
 
     monkeypatch.setattr(demo_orchestrator.ProcessSupervisor, "terminate_all", cleanup_failure)
     monkeypatch.setattr(demo_orchestrator, "_git_metadata", lambda _: ("a" * 40, False))
-    args = build_parser().parse_args(["--dry-run", "--artifact-root", str(tmp_path)])
+    args = build_parser().parse_args([
+        "--dry-run", "--config", str(ROOT / "config" / "demo_config.yaml"),
+        "--artifact-root", str(tmp_path)])
     assert demo_orchestrator.run(args) == 1
     run_dir = next(tmp_path.iterdir())
     acceptance = json.loads((run_dir / "acceptance.json").read_text())
