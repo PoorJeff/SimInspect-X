@@ -1,4 +1,8 @@
 import subprocess, sys, os
+import math
+from pathlib import Path
+import xml.etree.ElementTree as ET
+import pytest
 
 def test_xacro_parse():
     urdf_dir = os.path.join(os.path.dirname(__file__), '..', 'urdf')
@@ -37,3 +41,27 @@ def test_xacro_syntax():
     assert 'camera_optical_frame' in content
     assert 'left_wheel' in content
     assert 'right_wheel' in content
+
+
+def test_wheel_collision_axes_and_support_plane():
+    xacro = pytest.importorskip("xacro")
+    path = Path(__file__).resolve().parents[1] / "urdf" / "siminspect.urdf.xacro"
+    robot = ET.fromstring(xacro.process_file(str(path)).toxml())
+    contact_heights = []
+    for side in ("left", "right"):
+        link = robot.find(f"link[@name='{side}_wheel']")
+        joint = robot.find(f"joint[@name='{side}_wheel_joint']")
+        assert joint.find("axis").get("xyz") == "0 1 0"
+        for kind in ("visual", "collision"):
+            roll, pitch, yaw = map(float, link.find(f"{kind}/origin").get("rpy").split())
+            # A URDF cylinder starts along Z; rolling wheels must align to Y.
+            assert abs(math.sin(roll)) == pytest.approx(1.0)
+            assert pitch == pytest.approx(0.0)
+            assert yaw == pytest.approx(0.0)
+        radius = float(link.find("collision/geometry/cylinder").get("radius"))
+        contact_heights.append(float(joint.find("origin").get("xyz").split()[2]) - radius)
+    for name in ("caster_front", "caster_rear"):
+        joint = robot.find(f"joint[@name='{name}_joint']")
+        sphere = robot.find(f"link[@name='{name}']/collision/geometry/sphere")
+        contact_heights.append(float(joint.find("origin").get("xyz").split()[2]) - float(sphere.get("radius")))
+    assert max(contact_heights) - min(contact_heights) < 1e-6

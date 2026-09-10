@@ -12,14 +12,14 @@
   <xacro:macro name="wheel" params="name prefix x_reflect">
     <link name="${name}">
       <visual>
-        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <origin xyz="0 0 0" rpy="${pi/2} 0 0"/>
         <geometry>
           <cylinder radius="0.075" length="0.04"/>
         </geometry>
         <material name="black"/>
       </visual>
       <collision>
-        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <origin xyz="0 0 0" rpy="${pi/2} 0 0"/>
         <geometry>
           <cylinder radius="0.075" length="0.04"/>
         </geometry>
@@ -57,10 +57,15 @@
       </inertial>
     </link>
     <joint name="${name}_joint" type="fixed">
-      <origin xyz="${x} ${y} -0.065" rpy="0 0 0"/>
+      <origin xyz="${x} ${y} -0.0825" rpy="0 0 0"/>
       <parent link="base_link"/>
       <child link="${name}"/>
     </joint>
+    <!-- A spherical caster approximates a freely swivelling support. -->
+    <gazebo reference="${name}">
+      <mu1>0.001</mu1>
+      <mu2>0.001</mu2>
+    </gazebo>
   </xacro:macro>
 
   <!-- ===== BASE LINK ===== -->

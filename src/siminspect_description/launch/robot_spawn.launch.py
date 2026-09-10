@@ -36,7 +36,6 @@ def generate_launch_description():
 
     bridges = [
         "/scan@sensor_msgs/msg/LaserScan@gz.msgs.LaserScan",
-        "/imu/data@sensor_msgs/msg/Imu@gz.msgs.IMU",
         "/camera/image_raw@sensor_msgs/msg/Image@gz.msgs.Image",
         "/camera/camera_info@sensor_msgs/msg/CameraInfo@gz.msgs.CameraInfo",
         "/wheel/odometry@nav_msgs/msg/Odometry@gz.msgs.Odometry",
@@ -51,6 +50,12 @@ def generate_launch_description():
         remappings=[("/scan", "/scan_raw"),
                     ("/camera/image_raw", "/camera/image_raw"),
                     ("/camera/camera_info", "/camera/camera_info")])
+
+    imu_bridge = Node(
+        package="ros_gz_bridge", executable="parameter_bridge", name="imu_bridge",
+        arguments=["/imu/data@sensor_msgs/msg/Imu[gz.msgs.IMU"],
+        parameters=[{"use_sim_time": use_sim_time, "override_frame_id": "imu_link"}],
+    )
 
     scan_frame_relay = Node(
         package="siminspect_localization",
@@ -71,5 +76,5 @@ def generate_launch_description():
         DeclareLaunchArgument("gui", default_value="false"),
         DeclareLaunchArgument("world", default_value="empty.sdf"),
         DeclareLaunchArgument("publish_ground_truth", default_value="false"),
-        gz_server, gz_gui, rsp, gz_bridge, scan_frame_relay, gz_spawn, gt_pub,
+        gz_server, gz_gui, rsp, gz_bridge, imu_bridge, scan_frame_relay, gz_spawn, gt_pub,
     ])
