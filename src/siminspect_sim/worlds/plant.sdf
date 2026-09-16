@@ -29,7 +29,7 @@
     <link name="link">
       <visual name="visual">
         <geometry><plane><size>20 20</size></plane></geometry>
-        <material><ambient>0.3 0.3 0.3</ambient></material>
+        <material><ambient>0.3 0.3 0.3</ambient><diffuse>0.42 0.42 0.42 1</diffuse></material>
       </visual>
       <collision name="collision">
         <geometry><plane><size>20 20</size></plane></geometry>

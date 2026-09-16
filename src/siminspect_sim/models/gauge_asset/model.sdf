@@ -13,6 +13,7 @@
           </plane>
         </geometry>
         <material>
+          <lighting>false</lighting>
           <pbr>
             <metal>
               <albedo_map>model://gauge_asset/materials/textures/gauge_face.png</albedo_map>
