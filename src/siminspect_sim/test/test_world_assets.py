@@ -193,6 +193,17 @@ def test_world_primitives_use_sdf_child_elements():
         assert cylinder.findtext("length", "").strip()
 
 
+def test_headless_camera_scene_has_nonzero_ambient_and_long_range_light():
+    # OGRE headless rendering otherwise produces a valid image stream whose
+    # surfaces are nearly black, making the camera evidence unusable.
+    root = _world_root()
+    ambient = tuple(float(v) for v in root.findtext("scene/ambient").split())
+    assert ambient[:3] == (0.25, 0.25, 0.25)
+    light = root.find("light[@name='sun']")
+    assert light is not None
+    assert float(light.findtext("attenuation/range")) >= 100.0
+
+
 def test_gauge_face_origin_normal_size_and_texture_contract():
     config = ET.parse(MODEL_DIR / "model.config").getroot()
     assert config.findtext("name") == "gauge_asset"
