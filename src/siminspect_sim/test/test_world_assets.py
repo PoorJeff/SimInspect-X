@@ -199,7 +199,7 @@ def test_headless_camera_scene_has_nonzero_ambient_and_long_range_light():
     root = _world_root()
     ambient = tuple(float(v) for v in root.findtext(".//scene/ambient").split())
     assert ambient[:3] == (0.25, 0.25, 0.25)
-    light = root.find("light[@name='sun']")
+    light = root.find(".//light[@name='sun']")
     assert light is not None
     assert float(light.findtext("attenuation/range")) >= 100.0
 
