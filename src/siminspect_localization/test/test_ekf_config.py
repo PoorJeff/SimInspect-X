@@ -27,3 +27,11 @@ def test_imu_fuses_rate_without_overriding_wheel_pose_heading():
     # cannot create a second heading frame during turns.
     assert imu[3:6] == [False, False, False]
     assert imu[11] is True
+
+def test_wheel_odometry_pose_constrains_ekf_drift():
+    with open(CFG) as f:
+        p = yaml.safe_load(f)['ekf_filter_node']['ros__parameters']
+    odom = p['odom0_config']
+    assert odom[0] is True
+    assert odom[1] is True
+    assert odom[5] is True
