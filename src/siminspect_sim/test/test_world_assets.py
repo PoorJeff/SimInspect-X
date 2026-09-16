@@ -204,6 +204,17 @@ def test_headless_camera_scene_has_nonzero_ambient_and_long_range_light():
     assert float(light.findtext("attenuation/range")) >= 100.0
 
 
+def test_headless_camera_materials_emit_visible_surface_values():
+    root = _world_root()
+    ground = root.find(".//model[@name='ground']//visual/material")
+    assert ground is not None
+    assert ground.findtext("diffuse") is not None
+    gauge_face = ET.parse(MODEL_DIR / "model.sdf").getroot().find(
+        ".//visual[@name='gauge_face']/material")
+    assert gauge_face is not None
+    assert gauge_face.findtext("lighting") == "false"
+
+
 def test_gauge_face_origin_normal_size_and_texture_contract():
     config = ET.parse(MODEL_DIR / "model.config").getroot()
     assert config.findtext("name") == "gauge_asset"
