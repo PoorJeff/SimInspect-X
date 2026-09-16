@@ -9,6 +9,13 @@ def test_controller_is_mppi():
     fw = cs["FollowPath"]
     assert fw["plugin"] == "nav2_mppi_controller::MPPIController"
 
+def test_controller_uses_measured_filtered_odometry():
+    # MPPI needs measured speed as well as TF. The default /odom has no
+    # publisher in this stack, so it would repeatedly accelerate from zero.
+    with open(CFG) as f:
+        data = yaml.safe_load(f)
+    assert data["controller_server"]["ros__parameters"].get("odom_topic") == "/odometry/filtered"
+
 def test_motion_model_diffdrive():
     with open(CFG) as f:
         data = yaml.safe_load(f)

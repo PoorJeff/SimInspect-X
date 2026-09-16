@@ -3,6 +3,10 @@ install/
 log/
 artifacts/validation/
 artifacts/runs/
+artifacts/diagnostics/
+artifacts/regression-red/
+artifacts/model-red/
+artifacts/*.tar.gz
 .worktrees/
 .venv/
 __pycache__/
